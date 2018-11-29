@@ -1,0 +1,4 @@
+micronaut:
+    function:
+        name: batch-scheduler
+        version: 0.1
