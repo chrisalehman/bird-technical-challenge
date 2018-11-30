@@ -1,4 +1,4 @@
-package batch.scheduler.util
+package batch.scheduler.controller
 
 import batch.scheduler.domain.*
 import batch.scheduler.service.CommandService
@@ -11,7 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class CLI(private val commandService: CommandService) {
 
-    private enum class Token { CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
+    private enum class Tokens { CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
     private var terminateProcess: Boolean = false
 
     fun start() {
@@ -19,7 +19,7 @@ class CLI(private val commandService: CommandService) {
         print(getUsage())
         print("> ")
 
-        // listen on stdin
+        // listen on std in
         val scanner = Scanner(System.`in`)
         scanner.use {
 
@@ -28,15 +28,14 @@ class CLI(private val commandService: CommandService) {
                 // read line of text
                 val args: List<String> = ArrayList(scanner.nextLine().split(" "))
 
-                // execute command line interpreter
-                parse(args)
-
+                process(args)
                 print("> ")
             }
         }
     }
 
-    private fun parse(input: List<String>) {
+    // todo: make sure to address quotes around city names
+    private fun process(input: List<String>) {
 
         // minimum threshold of expected tokens
         if (input.size < 2) {
@@ -46,18 +45,18 @@ class CLI(private val commandService: CommandService) {
 
         try {
 
-            // parse input
+            // process input
             val command1 = input[0]
             when (command1) {
-                Token.CITY.name -> commandService.createCity(parseCity(input.subList(1, input.size)))
-                Token.BATCH.name -> commandService.createBatch(parseBatch(input.subList(1, input.size)))
-                Token.SCHEDULE.name -> commandService.scheduleBatch(parseSchedule(input.subList(1, input.size)))
-                Token.CANCEL.name -> commandService.cancelBatch(parseCancel(input.subList(1, input.size)))
-                Token.SHOW.name -> {
+                Tokens.CITY.name -> commandService.createCity(parseCity(input.subList(1, input.size)))
+                Tokens.BATCH.name -> commandService.createBatch(parseBatch(input.subList(1, input.size)))
+                Tokens.SCHEDULE.name -> commandService.scheduleBatch(parseSchedule(input.subList(1, input.size)))
+                Tokens.CANCEL.name -> commandService.cancelBatch(parseCancel(input.subList(1, input.size)))
+                Tokens.SHOW.name -> {
                     val command2 = input[1]
                     when (input[1]) {
-                        Token.CITIES.name -> commandService.showCities()
-                        Token.BATCHES.name -> commandService.showBatches()
+                        Tokens.CITIES.name -> commandService.showCities()
+                        Tokens.BATCHES.name -> commandService.showBatches()
                         else -> println("Invalid command: $command1 $command2")
                     }
                 }
@@ -69,9 +68,9 @@ class CLI(private val commandService: CommandService) {
         } catch (e: NumberFormatException) {
             println("Invalid arguments")
         } catch (e: RuntimeException) {
+            // todo: needs to be logged in the error log
             throw e
         }
-
     }
 
     private fun parseCity(input: List<String>): City {
@@ -115,7 +114,7 @@ class CLI(private val commandService: CommandService) {
         return Deployment(batchId, city, startDate, endDate)
     }
 
-    private fun parseCancel(input: List<String>): Cancellation {
+    private fun parseCancel(input: List<String>): CancelDeployment {
 
         if (input.size < 3) {
             throw ArgumentListException("Missing arguments")
@@ -125,7 +124,7 @@ class CLI(private val commandService: CommandService) {
         val city: String = input[1]
         val date: ZonedDateTime = ZonedDateTime.parse(input[2])
 
-        return Cancellation(batchId, city, date)
+        return CancelDeployment(batchId, city, date)
     }
 
     private fun getUsage(): String {
@@ -137,9 +136,9 @@ class CLI(private val commandService: CommandService) {
                 .append("  -h, --help           Show this help message.\n")
                 .append("  -q, --quit           Exit the command line.\n\n")
                 .append("Commands:\n")
-                .append("  CITY <name> <latitude> <longitude> [<cap>]           Creates a city.\n")
+                .append("  CITY \"<name>\" <latitude> <longitude> [<cap>]         Creates a city.\n")
                 .append("  BATCH <id> <size>                                    Creates a batch.\n")
-                .append("  SCHEDULE <batch-id> <city> <start-date> <end-date>   Deploys a batch to a city.\n")
+                .append("  SCHEDULE <batch-id> \"<city>\" <start-date> <end-date> Deploys a batch to a city.\n")
                 .append("  CANCEL <city> <date>                                 Cancels batches for the given city and date.\n")
                 .append("  SHOW CITIES                                          Prints scheduled deployments by city.\n")
                 .append("  SHOW BATCHES                                         Prints scheduled deployments by batch.\n")

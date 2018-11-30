@@ -1,6 +1,6 @@
 package batch.scheduler
 
-import batch.scheduler.util.CLI
+import batch.scheduler.controller.CLI
 import io.micronaut.function.FunctionBean
 import io.micronaut.runtime.Micronaut
 import java.util.function.Supplier

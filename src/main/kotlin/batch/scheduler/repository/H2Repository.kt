@@ -1,5 +1,6 @@
 package batch.scheduler.repository
 
+import batch.scheduler.domain.CancelDeployment
 import batch.scheduler.domain.Batch
 import batch.scheduler.domain.City
 import batch.scheduler.domain.Deployment
@@ -13,13 +14,14 @@ import org.jooq.generated.tables.City.*
 import org.jooq.generated.tables.Deployment.DEPLOYMENT
 import org.jooq.generated.tables.records.BatchRecord
 import org.jooq.generated.tables.records.CityRecord
+import java.util.*
 
 
 @Singleton
 class H2Repository : Repository {
 
-@Inject
-private lateinit var ds: DataSource
+    @Inject
+    private lateinit var ds: DataSource
 
     @Inject
     private lateinit var ctx: DSLContext
@@ -64,18 +66,34 @@ private lateinit var ds: DataSource
         return record.get(BATCH.ID)
     }
 
+    // todo
+    override fun deleteDeploymentByDate(obj: CancelDeployment): Boolean {
+        return false
+    }
+
+    // todo
+    override fun getDeploymentsByCity(): TreeMap<City, List<Deployment>> {
+        return TreeMap()
+    }
+
+    // todo
+    override fun getDeploymentsByBatch(): TreeMap<Batch, List<Deployment>> {
+        return TreeMap()
+    }
+
     /* internal */
 
     // todo: handle non-existence
     private fun getCity(name: String): CityRecord {
+        // todo: check that only record returned
         return ctx.selectFrom(CITY)
                     .where(CITY.NAME.eq(name))
                     .fetchOne()
-
     }
 
     // todo: handle non-existence
     private fun getBatch(batchId: Int): BatchRecord {
+        // todo: check that only record returned
         return ctx.selectFrom(BATCH)
                     .where(BATCH.BATCH_ID.eq(batchId))
                     .fetchOne()

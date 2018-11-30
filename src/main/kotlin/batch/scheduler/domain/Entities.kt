@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 
 
 /**
- * City domain domain.
+ * City domain object.
  * <p>
  * @param name
  * @param latitude
@@ -16,28 +16,19 @@ data class City(val name: String, val latitude: Float, val longitude: Float, var
 }
 
 /**
- * Batch domain domain.
+ * Batch domain object.
  * <p>
- * @param batchId - The batch ID
+ * @param batchId - The batch ID.
  * @param count - The number of Birds in the batch.
  */
 data class Batch(val batchId: Int, val count: Int)
 
 /**
- * Deployment domain domain.
+ * Deployment domain object.
  * <p>
- * @param batchId - The batch ID
+ * @param batchId - The batch ID.
  * @param city - The name of the city.
  * @param startDate - The date/time (with timezone) the batch is delivered and in effect.
  * @param endDate - The date/time (with timezone) the batch is decommissioned.
  */
 data class Deployment(val batchId: Int, val city: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime)
-
-/**
- * Cancellation domain domain.
- * <p>
- * @param batchId - The batch ID
- * @param city - The name of the city.
- * @param date - Any date/time between the scheduled deployment start and end dates.
- */
-data class Cancellation(val batchId: Int, val city: String, val date: ZonedDateTime)

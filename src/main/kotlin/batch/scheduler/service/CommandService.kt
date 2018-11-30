@@ -1,7 +1,7 @@
 package batch.scheduler.service
 
 import batch.scheduler.domain.Batch
-import batch.scheduler.domain.Cancellation
+import batch.scheduler.domain.CancelDeployment
 import batch.scheduler.domain.City
 import batch.scheduler.domain.Deployment
 import batch.scheduler.repository.Repository
@@ -31,7 +31,7 @@ import javax.inject.Singleton
         println("Created deployment $id")
     }
 
-    fun cancelBatch(data: Cancellation) {
+    fun cancelBatch(data: CancelDeployment) {
         println("cancelBatch($data)")
     }
 

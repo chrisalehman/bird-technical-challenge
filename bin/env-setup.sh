@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# install sdk
+# install sdk package manager
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk version
@@ -11,7 +11,7 @@ sdk install kotlin
 sdk install gradle
 sdk install micronaut
 
-# install homebrew
+# install homebrew package manager
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 # install git
