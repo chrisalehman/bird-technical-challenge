@@ -76,6 +76,7 @@ class CLI(private val commandService: CommandService) {
         } catch (e: ArgumentListException) {
             println("Missing arguments")
         } catch (e: RuntimeException) {
+            throw e
             println("Invalid arguments")
         }
 

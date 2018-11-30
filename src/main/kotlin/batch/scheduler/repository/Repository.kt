@@ -7,7 +7,7 @@ import batch.scheduler.model.Deployment
 
 interface Repository {
 
-    fun createCity(city: City): Boolean
-    fun createBatch(batch: Batch): Boolean
-    fun createDeployment(deployment: Deployment): Boolean
+    fun createCity(city: City)
+    fun createBatch(batch: Batch)
+    fun createDeployment(deployment: Deployment)
 }
