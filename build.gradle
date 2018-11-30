@@ -52,9 +52,6 @@ dependencies {
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
     compile group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.1.7'
     jooqRuntime "org.jooq:jooq-meta-extensions:3.11.7"
-//    compile group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.2.11'
-//    compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.2.11'
-    //    jooqRuntime 'postgresql:postgresql:9.1-901.jdbc4'
     jooqRuntime 'javax.activation:activation:1.1.1'
     jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
     jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'

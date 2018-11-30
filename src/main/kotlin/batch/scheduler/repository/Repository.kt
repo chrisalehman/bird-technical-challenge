@@ -1,13 +1,13 @@
 package batch.scheduler.repository
 
-import batch.scheduler.model.Batch
-import batch.scheduler.model.City
-import batch.scheduler.model.Deployment
+import batch.scheduler.domain.Batch
+import batch.scheduler.domain.City
+import batch.scheduler.domain.Deployment
 
 
 interface Repository {
 
-    fun createCity(city: City)
-    fun createBatch(batch: Batch)
-    fun createDeployment(deployment: Deployment)
+    fun createCity(city: City): Long
+    fun createBatch(batch: Batch): Long
+    fun createDeployment(deployment: Deployment): Long
 }

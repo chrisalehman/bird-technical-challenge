@@ -16,13 +16,13 @@ import javax.sql.DataSource
 
 @Singleton
 @Factory
-class DataSourceFactory() {
+class DataSourceFactory {
 
     @Inject
     private lateinit var ds: DataSource
 
     @Bean
-    fun dslConext(): DSLContext {
+    fun dslContext(): DSLContext {
 
         val settings = Settings()
                 // Normally, the records are "attached" to the Configuration that created (i.e. fetch/insert) them.

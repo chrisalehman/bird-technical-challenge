@@ -1,9 +1,9 @@
 package batch.scheduler.service
 
-import batch.scheduler.model.Batch
-import batch.scheduler.model.Cancellation
-import batch.scheduler.model.City
-import batch.scheduler.model.Deployment
+import batch.scheduler.domain.Batch
+import batch.scheduler.domain.Cancellation
+import batch.scheduler.domain.City
+import batch.scheduler.domain.Deployment
 import batch.scheduler.repository.Repository
 import javax.inject.Singleton
 
@@ -17,15 +17,18 @@ import javax.inject.Singleton
 @Singleton class CommandService(private val repo: Repository) {
 
     fun createCity(data: City) {
-        repo.createCity(data)
+        val id = repo.createCity(data)
+        println("Created city $id")
     }
 
     fun createBatch(data: Batch) {
-        println("createBatch($data)")
+        val id = repo.createBatch(data)
+        println("Created batch $id")
     }
 
     fun scheduleBatch(data: Deployment) {
-        println("scheduleBatch($data)")
+        val id = repo.createDeployment(data)
+        println("Created deployment $id")
     }
 
     fun cancelBatch(data: Cancellation) {

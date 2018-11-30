@@ -1,10 +1,10 @@
-package batch.scheduler.model
+package batch.scheduler.domain
 
 import java.time.ZonedDateTime
 
 
 /**
- * City resource.
+ * City domain domain.
  * <p>
  * @param name
  * @param latitude
@@ -16,15 +16,15 @@ data class City(val name: String, val latitude: Float, val longitude: Float, var
 }
 
 /**
- * Batch resource.
+ * Batch domain domain.
  * <p>
- * @param id - The batch ID
+ * @param batchId - The batch ID
  * @param count - The number of Birds in the batch.
  */
-data class Batch(val id: Int, val count: Int)
+data class Batch(val batchId: Int, val count: Int)
 
 /**
- * Deployment resource.
+ * Deployment domain domain.
  * <p>
  * @param batchId - The batch ID
  * @param city - The name of the city.
@@ -34,7 +34,7 @@ data class Batch(val id: Int, val count: Int)
 data class Deployment(val batchId: Int, val city: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime)
 
 /**
- * Cancellation resource.
+ * Cancellation domain domain.
  * <p>
  * @param batchId - The batch ID
  * @param city - The name of the city.

@@ -1,6 +1,6 @@
 package batch.scheduler.util
 
-import batch.scheduler.model.*
+import batch.scheduler.domain.*
 import batch.scheduler.service.CommandService
 import java.lang.StringBuilder
 import java.time.ZonedDateTime
@@ -11,16 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class CLI(private val commandService: CommandService) {
 
-    private enum class Token {
-        CITY,
-        CITIES,
-        BATCH,
-        BATCHES,
-        SCHEDULE,
-        CANCEL,
-        SHOW
-    }
-
+    private enum class Token { CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
     private var terminateProcess: Boolean = false
 
     fun start() {
@@ -75,9 +66,10 @@ class CLI(private val commandService: CommandService) {
 
         } catch (e: ArgumentListException) {
             println("Missing arguments")
+        } catch (e: NumberFormatException) {
+            println("Invalid arguments")
         } catch (e: RuntimeException) {
             throw e
-            println("Invalid arguments")
         }
 
     }
