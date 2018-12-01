@@ -43,5 +43,5 @@ SELECT DISTINCT b.batch_number, c.name, d.start_date, d.end_date
 FROM batch b
 LEFT OUTER JOIN deployment d ON b.id = d.batch_id
 LEFT OUTER JOIN city c on c.id = d.city_id
-WHERE b.batch_number = 'XXX'
+WHERE b.batch_number = XXX
 ORDER BY b.batch_number ASC, d.start_date ASC, d.end_date ASC;
