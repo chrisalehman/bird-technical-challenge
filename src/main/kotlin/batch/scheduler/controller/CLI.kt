@@ -88,8 +88,7 @@ class CLI(private val commandService: CommandService) {
         } catch (e: NumberFormatException) {
             println("Invalid arguments")
         } catch (e: RuntimeException) {
-            // todo: needs to be logged in the error log
-            throw e
+            e.printStackTrace()
         }
     }
 

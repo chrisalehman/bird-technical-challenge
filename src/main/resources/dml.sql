@@ -17,14 +17,15 @@ VALUES (2, 2, '2018-08-31T00:44:40+00:00', '2018-09-24T00:44:40+00:00'),
        (2, 2, '2018-08-31T00:44:40+00:00', '2018-09-24T00:44:40+00:00');
 
 -- deployments, grouped by city name
-SELECT c.name, b.batch_number, d.start_date, d.end_date
+SELECT DISTINCT c.name, b.batch_number, b.size, d.start_date, d.end_date
 FROM city c
 LEFT OUTER JOIN deployment d ON c.id = d.city_id
 LEFT OUTER JOIN batch b on b.id = d.batch_id
-ORDER BY c.name ASC, d.start_date ASC, d.end_date ASC
+ORDER BY c.name ASC, d.start_date ASC, d.end_date ASC;
 
 -- deployments, grouped by batch number
-SELECT b.batch_number, d.start_date, d.end_date
+SELECT DISTINCT b.batch_number, c.name, d.start_date, d.end_date
 FROM batch b
 LEFT OUTER JOIN deployment d ON b.id = d.batch_id
+LEFT OUTER JOIN city c on c.id = d.city_id
 ORDER BY b.batch_number ASC, d.start_date ASC, d.end_date ASC;

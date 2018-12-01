@@ -1,5 +1,6 @@
 package batch.scheduler.domain
 
+import java.lang.StringBuilder
 import java.time.ZonedDateTime
 
 
@@ -11,8 +12,13 @@ import java.time.ZonedDateTime
  * @param startDate
  * @param endDate
  */
-data class DeploymentsByCityUnit(/*val batchNumber: Int, */val batchSize: Int, val startDate: ZonedDateTime,
-                                 val endDate: ZonedDateTime)
+data class DeploymentsByCityUnit(val batchNumber: Int, val batchSize: Int, val startDate: ZonedDateTime,
+                                 val endDate: ZonedDateTime) {
+
+    override fun toString(): String {
+        return "BATCH($batchNumber, $batchSize) -> $startDate $endDate"
+    }
+}
 
 /**
  * Represents a grouped unit of the 'deployments by batch' query.
@@ -21,4 +27,9 @@ data class DeploymentsByCityUnit(/*val batchNumber: Int, */val batchSize: Int, v
  * @param startDate
  * @param endDate
  */
-data class DeploymentsByBatchUnit(/*val cityName: String, */val startDate: ZonedDateTime, val endDate: ZonedDateTime)
+data class DeploymentsByBatchUnit(val cityName: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime) {
+
+    override fun toString(): String {
+        return "$cityName $startDate $endDate"
+    }
+}

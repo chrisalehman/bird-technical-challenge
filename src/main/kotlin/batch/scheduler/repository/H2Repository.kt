@@ -18,9 +18,6 @@ import java.util.SortedMap
 class H2Repository : Repository {
 
     @Inject
-    private lateinit var ds: DataSource
-
-    @Inject
     private lateinit var ctx: DSLContext
 
     override fun createCity(obj: City): Long {
@@ -69,7 +66,7 @@ class H2Repository : Repository {
     }
 
     override fun getDeploymentsByCity(): SortedMap<String,List<DeploymentsByCityUnit>> {
-        return ctx.select(CITY.NAME, BATCH.BATCH_NUMBER, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+        return ctx.selectDistinct(CITY.NAME, BATCH.BATCH_NUMBER, BATCH.SIZE, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(CITY)
             .leftOuterJoin(DEPLOYMENT).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
             .leftOuterJoin(BATCH).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
@@ -82,6 +79,7 @@ class H2Repository : Repository {
                 else v.map {
                     DeploymentsByCityUnit(
                         it.get(BATCH.BATCH_NUMBER),
+                        it.get(BATCH.SIZE),
                         it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
                         it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
                 }
@@ -89,9 +87,10 @@ class H2Repository : Repository {
     }
 
     override fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentsByBatchUnit>> {
-        return ctx.select(BATCH.BATCH_NUMBER, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+        return ctx.selectDistinct(BATCH.BATCH_NUMBER, CITY.NAME, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(BATCH)
             .leftOuterJoin(DEPLOYMENT).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
+            .leftOuterJoin(CITY).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
             .orderBy(DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
             .fetch()
             .asSequence()
@@ -100,6 +99,7 @@ class H2Repository : Repository {
                 if (v.first().get(DEPLOYMENT.START_DATE) == null) listOf()
                 else v.map {
                     DeploymentsByBatchUnit(
+                        it.get(CITY.NAME),
                         it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
                         it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
                 }
