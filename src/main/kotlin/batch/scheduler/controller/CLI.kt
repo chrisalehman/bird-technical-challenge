@@ -77,6 +77,10 @@ class CLI(private val commandService: CommandService) {
                                 map[it]?.forEach { deployment -> println(deployment) }  // print deployments
                             }
                         }
+                        Tokens.CITY.name -> if (input.size > 2) commandService.getDeployments(input[2])
+                            else println("Invalid arguments")
+                        Tokens.BATCH.name -> if (input.size > 2) commandService.getDeployments(input[2].toInt())
+                            else println("Invalid arguments")
                         else -> println("Invalid command: $command1 $command2")
                     }
                 }

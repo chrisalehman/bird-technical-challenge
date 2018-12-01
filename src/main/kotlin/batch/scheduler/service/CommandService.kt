@@ -33,8 +33,16 @@ import javax.inject.Singleton
         println("cancelBatch($data)")
     }
 
+    fun getDeployments(city: String): List<DeploymentsByCityUnit> {
+        return repo.getDeployments(city)
+    }
+
     fun getDeploymentsByCity(): SortedMap<String, List<DeploymentsByCityUnit>> {
         return repo.getDeploymentsByCity()
+    }
+
+    fun getDeployments(batchNumber: Int): List<DeploymentsByBatchUnit> {
+        return repo.getDeployments(batchNumber)
     }
 
     fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentsByBatchUnit>> {

@@ -6,7 +6,6 @@ import org.jooq.Record
 import org.jooq.generated.tables.Batch.BATCH
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.sql.DataSource
 import org.jooq.generated.tables.City.*
 import org.jooq.generated.tables.Deployment.DEPLOYMENT
 import org.jooq.generated.tables.records.BatchRecord
@@ -65,6 +64,23 @@ class H2Repository : Repository {
         return false
     }
 
+    override fun getDeployments(city: String): List<DeploymentsByCityUnit> {
+        return ctx.selectDistinct(CITY.NAME, BATCH.BATCH_NUMBER, BATCH.SIZE, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+                .from(CITY)
+                .join(DEPLOYMENT).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
+                .leftOuterJoin(BATCH).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
+                .where(CITY.NAME.eq(city))
+                .orderBy(DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
+                .fetch()
+                .asSequence()
+                .map { DeploymentsByCityUnit(
+                        it.get(BATCH.BATCH_NUMBER),
+                        it.get(BATCH.SIZE),
+                        it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
+                        it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                .toList()
+    }
+
     override fun getDeploymentsByCity(): SortedMap<String,List<DeploymentsByCityUnit>> {
         return ctx.selectDistinct(CITY.NAME, BATCH.BATCH_NUMBER, BATCH.SIZE, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(CITY)
@@ -84,6 +100,21 @@ class H2Repository : Repository {
                         it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
                 }
             .toSortedMap()
+    }
+
+    override fun getDeployments(batchNumber: Int): List<DeploymentsByBatchUnit> {
+        return ctx.selectDistinct(BATCH.BATCH_NUMBER, CITY.NAME, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+                .from(BATCH)
+                .join(DEPLOYMENT).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
+                .leftOuterJoin(CITY).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
+                .orderBy(DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
+                .fetch()
+                .asSequence()
+                .map { DeploymentsByBatchUnit(
+                        it.get(CITY.NAME),
+                        it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
+                        it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                .toList()
     }
 
     override fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentsByBatchUnit>> {
