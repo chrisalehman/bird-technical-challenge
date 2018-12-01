@@ -6,6 +6,7 @@ import java.lang.StringBuilder
 import java.time.ZonedDateTime
 import java.util.*
 import javax.inject.Singleton
+import java.util.regex.Pattern
 
 
 @Singleton
@@ -22,20 +23,27 @@ class CLI(private val commandService: CommandService) {
         // listen on std in
         val scanner = Scanner(System.`in`)
         scanner.use {
-
             while (!terminateProcess) {
-
-                // read line of text
-                val args: List<String> = ArrayList(scanner.nextLine().split(" "))
-
-                process(args)
+                process(parseWords(scanner.nextLine()))
                 print("> ")
             }
         }
     }
 
+    // return words delimited by space, but preserving quotations around phrases
+    private fun parseWords(line: String): List<String> {
+        val words: ArrayList<String> = ArrayList()
+        val m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line)
+        while (m.find()) {
+            words.add(m.group(1).replace("\"", ""))
+        }
+        return words
+    }
+
     // todo: make sure to address quotes around city names
     private fun process(input: List<String>) {
+
+        println(input)
 
         // minimum threshold of expected tokens
         if (input.size < 2) {
@@ -55,8 +63,20 @@ class CLI(private val commandService: CommandService) {
                 Tokens.SHOW.name -> {
                     val command2 = input[1]
                     when (input[1]) {
-                        Tokens.CITIES.name -> commandService.showCities()
-                        Tokens.BATCHES.name -> commandService.showBatches()
+                        Tokens.CITIES.name -> {
+                            val map = commandService.getDeploymentsByCity()
+                            map.keys.forEach {
+                                println(it)                                             // print city
+                                map[it]?.forEach { deployment -> println(deployment) }  // print deployments
+                            }
+                        }
+                        Tokens.BATCHES.name -> {
+                            val map = commandService.getDeploymentsByBatch()
+                            map.keys.forEach {
+                                println("BATCH $it")                                    // print batch
+                                map[it]?.forEach { deployment -> println(deployment) }  // print deployments
+                            }
+                        }
                         else -> println("Invalid command: $command1 $command2")
                     }
                 }

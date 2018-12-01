@@ -1,9 +1,6 @@
 package batch.scheduler.repository
 
-import batch.scheduler.domain.CancelDeployment
-import batch.scheduler.domain.Batch
-import batch.scheduler.domain.City
-import batch.scheduler.domain.Deployment
+import batch.scheduler.domain.*
 import org.jooq.DSLContext
 import org.jooq.Record
 import org.jooq.generated.tables.Batch.BATCH
@@ -14,7 +11,7 @@ import org.jooq.generated.tables.City.*
 import org.jooq.generated.tables.Deployment.DEPLOYMENT
 import org.jooq.generated.tables.records.BatchRecord
 import org.jooq.generated.tables.records.CityRecord
-import java.util.*
+import java.util.SortedMap
 
 
 @Singleton
@@ -26,12 +23,12 @@ class H2Repository : Repository {
     @Inject
     private lateinit var ctx: DSLContext
 
-    override fun createCity(city: City): Long {
+    override fun createCity(obj: City): Long {
         val record: Record = ctx.insertInto(CITY)
-            .set(CITY.NAME, city.name)
-            .set(CITY.LATITUDE, city.latitude)
-            .set(CITY.LONGITUDE, city.longitude)
-            .set(CITY.CAP, city.cap)
+            .set(CITY.NAME, obj.name)
+            .set(CITY.LATITUDE, obj.latitude)
+            .set(CITY.LONGITUDE, obj.longitude)
+            .set(CITY.CAP, obj.cap)
             .returning(CITY.ID)
             .fetchOne()
 
@@ -40,10 +37,10 @@ class H2Repository : Repository {
         return record.get(CITY.ID)
     }
 
-    override fun createBatch(batch: Batch): Long {
+    override fun createBatch(obj: Batch): Long {
         val record: Record = ctx.insertInto(BATCH)
-                .set(BATCH.BATCH_ID, batch.batchId)
-                .set(BATCH.BATCH_COUNT, batch.count)
+                .set(BATCH.BATCH_NUMBER, obj.batchNumber)
+                .set(BATCH.SIZE, obj.size)
                 .returning(BATCH.ID)
                 .fetchOne()
 
@@ -52,12 +49,12 @@ class H2Repository : Repository {
         return record.get(BATCH.ID)
     }
 
-    override fun createDeployment(deployment: Deployment): Long {
+    override fun createDeployment(obj: Deployment): Long {
         val record: Record = ctx.insertInto(DEPLOYMENT)
-                                .set(DEPLOYMENT.BATCH_ID, getBatch(deployment.batchId).id)
-                                .set(DEPLOYMENT.CITY_ID, getCity(deployment.city).id)
-                                .set(DEPLOYMENT.START_DATE, deployment.startDate.toOffsetDateTime())
-                                .set(DEPLOYMENT.END_DATE, deployment.endDate.toOffsetDateTime())
+                                .set(DEPLOYMENT.BATCH_ID, getBatch(obj.batchNumber).id)
+                                .set(DEPLOYMENT.CITY_ID, getCity(obj.city).id)
+                                .set(DEPLOYMENT.START_DATE, obj.startDate.toOffsetDateTime())
+                                .set(DEPLOYMENT.END_DATE, obj.endDate.toOffsetDateTime())
                                 .returning(DEPLOYMENT.ID)
                                 .fetchOne()
 
@@ -71,14 +68,42 @@ class H2Repository : Repository {
         return false
     }
 
-    // todo
-    override fun getDeploymentsByCity(): TreeMap<City, List<Deployment>> {
-        return TreeMap()
+    override fun getDeploymentsByCity(): SortedMap<String,List<DeploymentsByCityUnit>> {
+        return ctx.select(CITY.NAME, BATCH.BATCH_NUMBER, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+            .from(CITY)
+            .leftOuterJoin(DEPLOYMENT).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
+            .leftOuterJoin(BATCH).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
+            .orderBy(CITY.NAME.asc(), DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
+            .fetch()
+            .asSequence()
+            .groupBy { it.get(CITY.NAME) }
+            .mapValues { (_,v) ->
+                if (v.first().get(DEPLOYMENT.START_DATE) == null) listOf()
+                else v.map {
+                    DeploymentsByCityUnit(
+                        it.get(BATCH.BATCH_NUMBER),
+                        it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
+                        it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                }
+            .toSortedMap()
     }
 
-    // todo
-    override fun getDeploymentsByBatch(): TreeMap<Batch, List<Deployment>> {
-        return TreeMap()
+    override fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentsByBatchUnit>> {
+        return ctx.select(BATCH.BATCH_NUMBER, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
+            .from(BATCH)
+            .leftOuterJoin(DEPLOYMENT).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
+            .orderBy(DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
+            .fetch()
+            .asSequence()
+            .groupBy { it.get(BATCH.BATCH_NUMBER) }
+            .mapValues { (_,v) ->
+                if (v.first().get(DEPLOYMENT.START_DATE) == null) listOf()
+                else v.map {
+                    DeploymentsByBatchUnit(
+                        it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
+                        it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                }
+            .toSortedMap()
     }
 
     /* internal */
@@ -92,10 +117,10 @@ class H2Repository : Repository {
     }
 
     // todo: handle non-existence
-    private fun getBatch(batchId: Int): BatchRecord {
+    private fun getBatch(batchNumber: Int): BatchRecord {
         // todo: check that only record returned
         return ctx.selectFrom(BATCH)
-                    .where(BATCH.BATCH_ID.eq(batchId))
+                    .where(BATCH.BATCH_NUMBER.eq(batchNumber))
                     .fetchOne()
     }
 }

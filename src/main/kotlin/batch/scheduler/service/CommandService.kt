@@ -1,10 +1,8 @@
 package batch.scheduler.service
 
-import batch.scheduler.domain.Batch
-import batch.scheduler.domain.CancelDeployment
-import batch.scheduler.domain.City
-import batch.scheduler.domain.Deployment
+import batch.scheduler.domain.*
 import batch.scheduler.repository.Repository
+import java.util.*
 import javax.inject.Singleton
 
 
@@ -35,11 +33,11 @@ import javax.inject.Singleton
         println("cancelBatch($data)")
     }
 
-    fun showCities() {
-        println("showCities")
+    fun getDeploymentsByCity(): SortedMap<String, List<DeploymentsByCityUnit>> {
+        return repo.getDeploymentsByCity()
     }
 
-    fun showBatches() {
-        println("showBatches")
+    fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentsByBatchUnit>> {
+        return repo.getDeploymentsByBatch()
     }
 }
