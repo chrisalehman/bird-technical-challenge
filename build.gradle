@@ -38,7 +38,7 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom 'io.micronaut:micronaut-bom:1.0.0'
+        mavenBom 'io.micronaut:micronaut-bom:1.0.1'
     }
 }
 
@@ -51,6 +51,8 @@ dependencies {
     compile "org.jooq:jooq"
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
     compile group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.1.7'
+    compile "io.micronaut:micronaut-spring"
+//    compile 'org.springframework:spring-jdbc:4.3.17.RELEASE'
     jooqRuntime "org.jooq:jooq-meta-extensions:3.11.7"
     jooqRuntime 'javax.activation:activation:1.1.1'
     jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
@@ -115,7 +117,7 @@ compileTestKotlin {
 jooq {
     version = '3.11.2'
     edition = 'OSS'
-    sample(sourceSets.main) {
+    batchscheduler(sourceSets.main) {
         generator {
             database {
                 name = 'org.jooq.meta.extensions.ddl.DDLDatabase'

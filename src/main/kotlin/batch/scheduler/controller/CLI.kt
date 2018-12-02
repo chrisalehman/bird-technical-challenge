@@ -40,10 +40,8 @@ class CLI(private val commandService: CommandService) {
         return words
     }
 
-    // todo: make sure to address quotes around city names
+    // todo: make sure to address multiple commands per line
     private fun process(input: List<String>) {
-
-        println(input)
 
         // minimum threshold of expected tokens
         if (input.size < 2) {
@@ -66,21 +64,25 @@ class CLI(private val commandService: CommandService) {
                         Tokens.CITIES.name -> {
                             val map = commandService.getDeploymentsByCity()
                             map.keys.forEach {
-                                println(it)                                             // print city
-                                map[it]?.forEach { deployment -> println(deployment) }  // print deployments
+                                println(it)
+                                map[it]?.forEach { e-> println(e) }
                             }
                         }
                         Tokens.BATCHES.name -> {
                             val map = commandService.getDeploymentsByBatch()
                             map.keys.forEach {
-                                println("BATCH $it")                                    // print batch
-                                map[it]?.forEach { deployment -> println(deployment) }  // print deployments
+                                println("BATCH $it")
+                                map[it]?.forEach { e -> println(e)}
                             }
                         }
-                        Tokens.CITY.name -> if (input.size > 2) commandService.getDeployments(input[2])
-                            else println("Invalid arguments")
-                        Tokens.BATCH.name -> if (input.size > 2) commandService.getDeployments(input[2].toInt())
-                            else println("Invalid arguments")
+                        Tokens.CITY.name -> if (input.size <= 2) println("Invalid arguments") else {
+                            commandService.getDeployments(input[2])
+                                    .forEach { e -> println(e) }
+                        }
+                        Tokens.BATCH.name -> if (input.size <= 2) println("Invalid arguments") else {
+                            commandService.getDeployments(input[2].toInt())
+                                    .forEach { e -> println(e) }
+                        }
                         else -> println("Invalid command: $command1 $command2")
                     }
                 }
@@ -159,12 +161,12 @@ class CLI(private val commandService: CommandService) {
                 .append("  -h, --help           Show this help message.\n")
                 .append("  -q, --quit           Exit the command line.\n\n")
                 .append("Commands:\n")
-                .append("  CITY \"<name>\" <latitude> <longitude> [<cap>]         Creates a city.\n")
-                .append("  BATCH <id> <size>                                    Creates a batch.\n")
-                .append("  SCHEDULE <batch-id> \"<city>\" <start-date> <end-date> Deploys a batch to a city.\n")
-                .append("  CANCEL <city> <date>                                 Cancels batches for the given city and date.\n")
-                .append("  SHOW CITIES                                          Prints scheduled deployments by city.\n")
-                .append("  SHOW BATCHES                                         Prints scheduled deployments by batch.\n")
+                .append("  CITY \"<name>\" <latitude> <longitude> [<cap>]             Creates a city.\n")
+                .append("  BATCH <id> <size>                                        Creates a batch.\n")
+                .append("  SCHEDULE <batch-id> \"<city>\" <start-date> <end-date>     Deploys a batch to a city.\n")
+                .append("  CANCEL <batch-id> \"<city>\" <date>                        Cancels a batch deployment based on the batch-id, city and date.\n")
+                .append("  SHOW CITIES                                              Prints scheduled deployments by city.\n")
+                .append("  SHOW BATCHES                                             Prints scheduled deployments by batch.\n")
                 .append("\n")
 
         return sb.toString()

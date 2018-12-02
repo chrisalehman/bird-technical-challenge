@@ -4,10 +4,41 @@ import java.time.ZonedDateTime
 
 
 /**
- * Cancels a deployment.
+ * City domain object.
  * <p>
- * @param batchId - The batch ID.
- * @param city - The name of the city.
- * @param date - Any date/time between the scheduled deployment start and end dates.
+ * @param name
+ * @param latitude
+ * @param longitude
+ * @param cap - Max number of Birds that can be allocated to a city.
  */
-data class CancelDeployment(val batchId: Int, val city: String, val date: ZonedDateTime)
+data class City(val name: String, val latitude: Float, val longitude: Float, var cap: Int) {
+    constructor(name: String, latitude: Float, longitude: Float): this(name, latitude, longitude, Integer.MAX_VALUE)
+}
+
+/**
+ * Batch domain object.
+ * <p>
+ * @param batchNumber - Batch number assigned by user.
+ * @param size - Size of the batch.
+ */
+data class Batch(val batchNumber: Int, val size: Int)
+
+/**
+ * Deployment domain object.
+ * <p>
+ * @param batchNumber
+ * @param city - Name of the city.
+ * @param startDate - The date/time (with timezone) the batch is delivered and in effect.
+ * @param endDate - The date/time (with timezone) the batch is decommissioned.
+ */
+data class Deployment(val batchNumber: Int, val city: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime)
+
+/**
+ * Cancel any matched deployment for the given batch number and city IFF the given date is between an existing
+ * scheduled deployment's start and end dates.
+ * <p>
+ * @param batchNumber
+ * @param cityName
+ * @param date - Any date/time between a scheduled deployment's start and end dates.
+ */
+data class CancelDeployment(val batchNumber: Int, val cityName: String, val date: ZonedDateTime)

@@ -2,10 +2,9 @@ micronaut:
     function:
         name: batch-scheduler
         version: 0.1
----
 datasources:
     default:
-        url: jdbc:h2:mem:default;INIT=runscript from 'classpath:ddl.sql';DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:h2:mem:default;DB_CLOSE_DELAY=-1
         username: sa
         password: ""
         driverClassName: org.h2.Driver
