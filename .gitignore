@@ -9,6 +9,7 @@ out/
 *.ipr
 *.iws
 *.log
+*.lock
 .project
 .settings
 .classpath
