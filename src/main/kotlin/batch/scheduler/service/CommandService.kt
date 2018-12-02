@@ -39,7 +39,8 @@ class CommandService(private val repo: Repository) {
     fun scheduleBatch(data: Deployment): Long {
         val id = repo.createDeployment(data)
         LOG.info("Created deployment $id: $data")
-        return id    }
+        return id
+    }
 
     fun cancelBatch(data: CancelDeployment): Boolean {
 
@@ -67,15 +68,11 @@ class CommandService(private val repo: Repository) {
     /* queries */
 
     fun getDeployments(city: String): List<DeploymentByCityUnit> {
-        val d = repo.getDeployments(city)
-        LOG.warn("Deployments: ${d.size}")
-        return d
+        return repo.getDeployments(city)
     }
 
     fun getDeployments(batchNumber: Int): List<DeploymentByBatchUnit> {
-        val d= repo.getDeployments(batchNumber)
-        LOG.warn("Deployments: ${d.size}")
-        return d
+        return repo.getDeployments(batchNumber)
     }
 
     fun getDeploymentsByCity(): SortedMap<String, List<DeploymentByCityUnit>> {

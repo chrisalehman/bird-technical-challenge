@@ -1,7 +1,9 @@
 package batch.scheduler.controller
 
 import batch.scheduler.domain.*
+import batch.scheduler.domain.DuplicateEntityException
 import batch.scheduler.service.CommandService
+import org.slf4j.LoggerFactory
 import java.lang.StringBuilder
 import java.time.ZonedDateTime
 import java.util.*
@@ -11,6 +13,10 @@ import java.util.regex.Pattern
 
 @Singleton
 class CLI(private val commandService: CommandService) {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(CLI::class.java)
+    }
 
     private enum class Tokens { CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
     private var terminateProcess: Boolean = false
@@ -65,14 +71,14 @@ class CLI(private val commandService: CommandService) {
                             val map = commandService.getDeploymentsByCity()
                             map.keys.forEach {
                                 println(it)
-                                map[it]?.forEach { e-> println(e) }
+                                map[it]?.forEach { e -> println(e) }
                             }
                         }
                         Tokens.BATCHES.name -> {
                             val map = commandService.getDeploymentsByBatch()
                             map.keys.forEach {
                                 println("BATCH $it")
-                                map[it]?.forEach { e -> println(e)}
+                                map[it]?.forEach { e -> println(e) }
                             }
                         }
                         Tokens.CITY.name -> if (input.size <= 2) println("Invalid arguments") else {
@@ -93,8 +99,12 @@ class CLI(private val commandService: CommandService) {
             println("Missing arguments")
         } catch (e: NumberFormatException) {
             println("Invalid arguments")
+        } catch (e: DuplicateEntityException) {
+            println(e.message)
+        } catch (e: NonExistentEntityException) {
+            println(e.message)
         } catch (e: RuntimeException) {
-            e.printStackTrace()
+            LOG.error("Trapping unresolved exception", e)
         }
     }
 
