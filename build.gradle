@@ -52,7 +52,7 @@ dependencies {
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
     compile group: 'com.sun.xml.bind', name: 'jaxb-xjc', version: '2.1.7'
     compile "io.micronaut:micronaut-spring"
-//    compile 'org.springframework:spring-jdbc:4.3.17.RELEASE'
+    compile group: 'com.breinify', name: 'brein-time-utilities', version: '1.7.0'
     jooqRuntime "org.jooq:jooq-meta-extensions:3.11.7"
     jooqRuntime 'javax.activation:activation:1.1.1'
     jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'

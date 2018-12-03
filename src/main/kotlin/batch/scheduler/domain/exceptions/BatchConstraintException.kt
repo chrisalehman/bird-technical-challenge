@@ -1,7 +1,7 @@
-package batch.scheduler.domain
+package batch.scheduler.domain.exceptions
 
 
-class NonExistentEntityException : RuntimeException {
+class BatchConstraintException : BusinessException {
     constructor(message: String, ex: Exception?): super(message, ex)
     constructor(message: String): super(message)
     constructor(ex: Exception): super(ex)

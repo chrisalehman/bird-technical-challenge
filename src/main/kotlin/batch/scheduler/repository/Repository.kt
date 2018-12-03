@@ -9,9 +9,9 @@ interface Repository {
 
     /* commands */
 
-    fun createCity(obj: City): Long
-    fun createBatch(obj: Batch): Long
-    fun createDeployment(obj: Deployment): Long
+    fun createCity(obj: CreateCity): Long
+    fun createBatch(obj: CreateBatch): Long
+    fun createDeployment(obj: ScheduleDeployment, city: CityRecord, batch: BatchRecord): Long
     fun deleteDeployment(id: Long): Int
 
     /* queries */
@@ -19,8 +19,8 @@ interface Repository {
     fun getCity(name: String): CityRecord?
     fun getBatch(batchNumber: Int): BatchRecord?
     fun getDeployment(batchNumber: Int, cityName: String, date: ZonedDateTime): DeploymentRecord?
-    fun getDeployments(city: String): List<DeploymentByCityUnit>
-    fun getDeployments(batchNumber: Int): List<DeploymentByBatchUnit>
-    fun getDeploymentsByCity(): SortedMap<String,List<DeploymentByCityUnit>>
-    fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentByBatchUnit>>
+    fun getDeployments(city: String): List<DeploymentByCityResult>
+    fun getDeployments(batchNumber: Int): List<DeploymentByBatchResult>
+    fun getDeploymentsByCity(): SortedMap<String,List<DeploymentByCityResult>>
+    fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentByBatchResult>>
 }

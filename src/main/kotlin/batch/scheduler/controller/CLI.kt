@@ -1,8 +1,8 @@
 package batch.scheduler.controller
 
 import batch.scheduler.domain.*
-import batch.scheduler.domain.DuplicateEntityException
-import batch.scheduler.service.CommandService
+import batch.scheduler.domain.exceptions.*
+import batch.scheduler.service.CommandQueryProcessor
 import org.slf4j.LoggerFactory
 import java.lang.StringBuilder
 import java.time.ZonedDateTime
@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 
 @Singleton
-class CLI(private val commandService: CommandService) {
+class CLI(private val processor: CommandQueryProcessor) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(CLI::class.java)
@@ -30,14 +30,14 @@ class CLI(private val commandService: CommandService) {
         val scanner = Scanner(System.`in`)
         scanner.use {
             while (!terminateProcess) {
-                process(parseWords(scanner.nextLine()))
+                process(parseTokens(scanner.nextLine()))
                 print("> ")
             }
         }
     }
 
     // return words delimited by space, but preserving quotations around phrases
-    private fun parseWords(line: String): List<String> {
+    private fun parseTokens(line: String): List<String> {
         val words: ArrayList<String> = ArrayList()
         val m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line)
         while (m.find()) {
@@ -46,7 +46,6 @@ class CLI(private val commandService: CommandService) {
         return words
     }
 
-    // todo: make sure to address multiple commands per line
     private fun process(input: List<String>) {
 
         // minimum threshold of expected tokens
@@ -60,33 +59,33 @@ class CLI(private val commandService: CommandService) {
             // process input
             val command1 = input[0]
             when (command1) {
-                Tokens.CITY.name -> commandService.createCity(parseCity(input.subList(1, input.size)))
-                Tokens.BATCH.name -> commandService.createBatch(parseBatch(input.subList(1, input.size)))
-                Tokens.SCHEDULE.name -> commandService.scheduleBatch(parseSchedule(input.subList(1, input.size)))
-                Tokens.CANCEL.name -> commandService.cancelBatch(parseCancel(input.subList(1, input.size)))
+                Tokens.CITY.name -> processor.createCity(parseCityCommand(input.subList(1, input.size)))
+                Tokens.BATCH.name -> processor.createBatch(parseBatchCommand(input.subList(1, input.size)))
+                Tokens.SCHEDULE.name -> processor.scheduleDeployment(parseScheduleCommand(input.subList(1, input.size)))
+                Tokens.CANCEL.name -> processor.cancelDeployment(parseCancelCommand(input.subList(1, input.size)))
                 Tokens.SHOW.name -> {
                     val command2 = input[1]
                     when (input[1]) {
                         Tokens.CITIES.name -> {
-                            val map = commandService.getDeploymentsByCity()
+                            val map = processor.getDeploymentsByCity()
                             map.keys.forEach {
                                 println(it)
                                 map[it]?.forEach { e -> println(e) }
                             }
                         }
                         Tokens.BATCHES.name -> {
-                            val map = commandService.getDeploymentsByBatch()
+                            val map = processor.getDeploymentsByBatch()
                             map.keys.forEach {
                                 println("BATCH $it")
                                 map[it]?.forEach { e -> println(e) }
                             }
                         }
                         Tokens.CITY.name -> if (input.size <= 2) println("Invalid arguments") else {
-                            commandService.getDeployments(input[2])
+                            processor.getDeployments(input[2])
                                     .forEach { e -> println(e) }
                         }
                         Tokens.BATCH.name -> if (input.size <= 2) println("Invalid arguments") else {
-                            commandService.getDeployments(input[2].toInt())
+                            processor.getDeployments(input[2].toInt())
                                     .forEach { e -> println(e) }
                         }
                         else -> println("Invalid command: $command1 $command2")
@@ -99,16 +98,15 @@ class CLI(private val commandService: CommandService) {
             println("Missing arguments")
         } catch (e: NumberFormatException) {
             println("Invalid arguments")
-        } catch (e: DuplicateEntityException) {
-            println(e.message)
-        } catch (e: NonExistentEntityException) {
+        } catch (e: BusinessException) {
             println(e.message)
         } catch (e: RuntimeException) {
-            LOG.error("Trapping unresolved exception", e)
+            println("Unexpected error; see application log for details")
+            LOG.error(e.message, e)
         }
     }
 
-    private fun parseCity(input: List<String>): City {
+    private fun parseCityCommand(input: List<String>): CreateCity {
 
         if (input.size < 3) {
            throw ArgumentListException("Missing arguments")
@@ -119,11 +117,11 @@ class CLI(private val commandService: CommandService) {
         val longitude: Float = input[2].toFloat()
         val cap: Int = if (input.size > 3) input[3].toInt() else Integer.MAX_VALUE
 
-        return if (input.size > 3) City(name, latitude, longitude, cap)
-            else City(name, latitude, longitude)
+        return if (input.size > 3) CreateCity(name, latitude, longitude, cap)
+            else CreateCity(name, latitude, longitude)
     }
 
-    private fun parseBatch(input: List<String>): Batch {
+    private fun parseBatchCommand(input: List<String>): CreateBatch {
 
         if (input.size < 2) {
             throw ArgumentListException("Missing arguments")
@@ -132,10 +130,10 @@ class CLI(private val commandService: CommandService) {
         val id: Int = input[0].toInt()
         val count: Int = input[1].toInt()
 
-        return Batch(id, count)
+        return CreateBatch(id, count)
     }
 
-    private fun parseSchedule(input: List<String>): Deployment {
+    private fun parseScheduleCommand(input: List<String>): ScheduleDeployment {
 
         if (input.size < 4) {
             throw ArgumentListException("Missing arguments")
@@ -146,10 +144,10 @@ class CLI(private val commandService: CommandService) {
         val startDate: ZonedDateTime = ZonedDateTime.parse(input[2])
         val endDate: ZonedDateTime = ZonedDateTime.parse(input[3])
 
-        return Deployment(batchId, city, startDate, endDate)
+        return ScheduleDeployment(batchId, city, startDate, endDate)
     }
 
-    private fun parseCancel(input: List<String>): CancelDeployment {
+    private fun parseCancelCommand(input: List<String>): CancelDeployment {
 
         if (input.size < 3) {
             throw ArgumentListException("Missing arguments")
@@ -166,7 +164,7 @@ class CLI(private val commandService: CommandService) {
 
         val sb = StringBuilder()
                 .append("\nUsage: COMMAND [-hq] <arguments...>\n")
-                .append("Batch scheduler CLI tool for managing Bird deployments.\n\n")
+                .append("CreateBatch scheduler CLI tool for managing Bird deployments.\n\n")
                 .append("Options:\n")
                 .append("  -h, --help           Show this help message.\n")
                 .append("  -q, --quit           Exit the command line.\n\n")

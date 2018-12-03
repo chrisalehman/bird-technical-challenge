@@ -1,7 +1,7 @@
 package batch.scheduler.repository
 
 import batch.scheduler.domain.*
-import batch.scheduler.domain.DuplicateEntityException
+import batch.scheduler.domain.exceptions.DuplicateEntityException
 import org.jooq.DSLContext
 import org.jooq.generated.tables.Batch.BATCH
 import javax.inject.Inject
@@ -12,15 +12,17 @@ import java.time.ZonedDateTime
 import java.util.SortedMap
 
 
-@Singleton
-class H2Repository : Repository {
+/**
+ * Repository backed by H2 database. Current implementation is in-memory.
+ */
+@Singleton class H2Repository : Repository {
 
     @Inject
     private lateinit var ctx: DSLContext
 
     /* commands */
 
-    override fun createCity(obj: City): Long {
+    override fun createCity(obj: CreateCity): Long {
         try {
             return ctx.insertInto(CITY)
                     .set(CITY.NAME, obj.name)
@@ -39,7 +41,7 @@ class H2Repository : Repository {
         }
     }
 
-    override fun createBatch(obj: Batch): Long {
+    override fun createBatch(obj: CreateBatch): Long {
         try {
             return ctx.insertInto(BATCH)
                     .set(BATCH.BATCH_NUMBER, obj.batchNumber)
@@ -56,13 +58,7 @@ class H2Repository : Repository {
         }
     }
 
-    override fun createDeployment(obj: Deployment): Long {
-
-        val city: CityRecord = getCity(obj.city)
-                ?: throw NonExistentEntityException("Cannot complete action for non-existent city '${obj.city}'")
-        val batch: BatchRecord = getBatch(obj.batchNumber)
-                ?: throw NonExistentEntityException("Cannot complete action for non-existent batch '${obj.batchNumber}'")
-
+    override fun createDeployment(obj: ScheduleDeployment, city: CityRecord, batch: BatchRecord): Long {
         return ctx.insertInto(DEPLOYMENT)
                 .set(DEPLOYMENT.BATCH_ID, batch.id)
                 .set(DEPLOYMENT.CITY_ID, city.id)
@@ -88,7 +84,8 @@ class H2Repository : Repository {
                 .fetchOptional()
 
         return if (!record.isPresent) null else {
-            record.get().map { CityRecord(
+            record.get()
+                  .map { CityRecord(
                     it.get(CITY.ID),
                     it.get(CITY.NAME),
                     it.get(CITY.LATITUDE),
@@ -103,8 +100,8 @@ class H2Repository : Repository {
                 .where(BATCH.BATCH_NUMBER.eq(batchNumber))
                 .fetchOptional()
         return if (!record.isPresent) null else {
-            record.get().map {
-                BatchRecord(
+            record.get()
+                  .map { BatchRecord(
                     it.get(BATCH.ID),
                     it.get(BATCH.BATCH_NUMBER),
                     it.get(BATCH.SIZE))}
@@ -126,8 +123,8 @@ class H2Repository : Repository {
             .fetchOptional()
 
         return if (!record.isPresent) null else {
-            record.get().map {
-                DeploymentRecord(
+            record.get()
+                  .map { DeploymentRecord(
                     it.get(DEPLOYMENT.ID),
                     it.get(DEPLOYMENT.CITY_ID),
                     it.get(DEPLOYMENT.BATCH_ID),
@@ -136,7 +133,7 @@ class H2Repository : Repository {
         }
     }
 
-    override fun getDeployments(city: String): List<DeploymentByCityUnit> {
+    override fun getDeployments(city: String): List<DeploymentByCityResult> {
         return ctx.selectDistinct(CITY.NAME, BATCH.BATCH_NUMBER, BATCH.SIZE, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(CITY)
             .join(DEPLOYMENT).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
@@ -145,7 +142,7 @@ class H2Repository : Repository {
             .orderBy(BATCH.BATCH_NUMBER.asc(), DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
             .fetch()
             .asSequence()
-            .map { DeploymentByCityUnit(
+            .map { DeploymentByCityResult(
                     it.get(BATCH.BATCH_NUMBER),
                     it.get(BATCH.SIZE),
                     it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
@@ -153,7 +150,7 @@ class H2Repository : Repository {
             .toList()
     }
 
-    override fun getDeployments(batchNumber: Int): List<DeploymentByBatchUnit> {
+    override fun getDeployments(batchNumber: Int): List<DeploymentByBatchResult> {
         return ctx.selectDistinct(BATCH.BATCH_NUMBER, CITY.NAME, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(BATCH)
             .join(DEPLOYMENT).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
@@ -162,14 +159,14 @@ class H2Repository : Repository {
             .orderBy(CITY.NAME.asc(), DEPLOYMENT.START_DATE.asc(), DEPLOYMENT.END_DATE.asc())
             .fetch()
             .asSequence()
-            .map { DeploymentByBatchUnit(
+            .map { DeploymentByBatchResult(
                     it.get(CITY.NAME),
                     it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
                     it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
             .toList()
     }
 
-    override fun getDeploymentsByCity(): SortedMap<String,List<DeploymentByCityUnit>> {
+    override fun getDeploymentsByCity(): SortedMap<String,List<DeploymentByCityResult>> {
         return ctx.selectDistinct(CITY.NAME, BATCH.BATCH_NUMBER, BATCH.SIZE, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(CITY)
             .leftOuterJoin(DEPLOYMENT).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
@@ -181,7 +178,7 @@ class H2Repository : Repository {
             .mapValues { (_,v) ->
                 if (v.first().get(DEPLOYMENT.START_DATE) == null) listOf()
                 else v.map {
-                    DeploymentByCityUnit(
+                    DeploymentByCityResult(
                             it.get(BATCH.BATCH_NUMBER),
                             it.get(BATCH.SIZE),
                             it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
@@ -190,7 +187,7 @@ class H2Repository : Repository {
             .toSortedMap()
     }
 
-    override fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentByBatchUnit>> {
+    override fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentByBatchResult>> {
         return ctx.selectDistinct(BATCH.BATCH_NUMBER, CITY.NAME, DEPLOYMENT.START_DATE, DEPLOYMENT.END_DATE)
             .from(BATCH)
             .leftOuterJoin(DEPLOYMENT).on(BATCH.ID.eq(DEPLOYMENT.BATCH_ID))
@@ -202,7 +199,7 @@ class H2Repository : Repository {
             .mapValues { (_,v) ->
                 if (v.first().get(DEPLOYMENT.START_DATE) == null) listOf()
                 else v.map {
-                    DeploymentByBatchUnit(
+                    DeploymentByBatchResult(
                         it.get(CITY.NAME),
                         it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
                         it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }

@@ -29,8 +29,8 @@ data class BatchRecord(val id: Long, val batchNumber: Int, val size: Int)
  * Represents a deployment record fetched from the data store.
  * <p>
  * @param id - Surrogate primary key.
- * @param cityId - City's surrogate primary key.
- * @param batchId - Batch's surrogate primary key.
+ * @param cityId - CreateCity's surrogate primary key.
+ * @param batchId - CreateBatch's surrogate primary key.
  * @param startDate
  * @param endDate
  */
@@ -45,8 +45,8 @@ data class DeploymentRecord(val id: Long, val cityId: Long, val batchId: Long, v
  * @param startDate
  * @param endDate
  */
-data class DeploymentByCityUnit(val batchNumber: Int, val batchSize: Int, val startDate: ZonedDateTime,
-                                val endDate: ZonedDateTime) {
+data class DeploymentByCityResult(val batchNumber: Int, val batchSize: Int, val startDate: ZonedDateTime,
+                                  val endDate: ZonedDateTime) {
 
     override fun toString(): String {
         return "BATCH($batchNumber, $batchSize) -> $startDate $endDate"
@@ -60,7 +60,7 @@ data class DeploymentByCityUnit(val batchNumber: Int, val batchSize: Int, val st
  * @param startDate
  * @param endDate
  */
-data class DeploymentByBatchUnit(val cityName: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime) {
+data class DeploymentByBatchResult(val cityName: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime) {
 
     override fun toString(): String {
         return "$cityName $startDate $endDate"
