@@ -5,8 +5,8 @@
 CREATE TABLE city (
   id bigint(20) NOT NULL auto_increment PRIMARY KEY,
   name varchar(255) NOT NULL,
-  latitude real(20) NOT NULL,
-  longitude real(20) NOT NULL,
+  latitude double NOT NULL,
+  longitude double NOT NULL,
   cap int NOT NULL DEFAULT 2147483647
 );
 

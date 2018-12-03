@@ -7,12 +7,11 @@ import java.time.ZonedDateTime
  * Command object for creating a city.
  * <p>
  * @param name
- * @param latitude
- * @param longitude
+ * @param coordinate
  * @param cap - Max number of Birds that can be allocated to a city.
  */
-data class CreateCity(val name: String, val latitude: Float, val longitude: Float, var cap: Int) {
-    constructor(name: String, latitude: Float, longitude: Float): this(name, latitude, longitude, Integer.MAX_VALUE)
+data class CreateCity(val name: String, val coordinate: Coordinate, var cap: Int) {
+    constructor(name: String, coordinate: Coordinate): this(name, coordinate, Integer.MAX_VALUE)
 }
 
 /**

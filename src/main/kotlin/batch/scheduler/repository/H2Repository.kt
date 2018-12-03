@@ -26,8 +26,8 @@ import java.util.SortedMap
         try {
             return ctx.insertInto(CITY)
                     .set(CITY.NAME, obj.name)
-                    .set(CITY.LATITUDE, obj.latitude)
-                    .set(CITY.LONGITUDE, obj.longitude)
+                    .set(CITY.LATITUDE, obj.coordinate.latitude)
+                    .set(CITY.LONGITUDE, obj.coordinate.longitude)
                     .set(CITY.CAP, obj.cap)
                     .returning(CITY.ID)
                     .fetchOne()
@@ -88,8 +88,7 @@ import java.util.SortedMap
                   .map { CityRecord(
                     it.get(CITY.ID),
                     it.get(CITY.NAME),
-                    it.get(CITY.LATITUDE),
-                    it.get(CITY.LONGITUDE),
+                    Coordinate(it.get(CITY.LATITUDE), it.get(CITY.LONGITUDE)),
                     it.get(CITY.CAP))}
         }
     }

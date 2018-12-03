@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 
 @Singleton
-class IntervalConstraintChecker {
+class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator) {
 
     /**
      * Batch data class associated with intervals

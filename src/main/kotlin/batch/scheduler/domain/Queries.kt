@@ -8,20 +8,17 @@ import java.time.ZonedDateTime
  * <p>
  * @param id - Surrogate primary key
  * @param name
- * @param latitude
- * @param longitude
+ * @param location - latitude, longitude
  * @param cap
  */
-data class CityRecord(val id: Long, val name: String, val latitude: Float, val longitude: Float, val cap: Int)
+data class CityRecord(val id: Long, val name: String, val location: Coordinate, val cap: Int)
 
 /**
  * Represents a batch record fetched from the data store.
  * <p>
  * @param id - Surrogate primary key
  * @param batchNumber - Publicly exposed identifier, i.e., business key
- * @param latitude
- * @param longitude
- * @param cap
+ * @param size
  */
 data class BatchRecord(val id: Long, val batchNumber: Int, val size: Int)
 

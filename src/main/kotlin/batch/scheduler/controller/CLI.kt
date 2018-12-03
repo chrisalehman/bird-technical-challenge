@@ -6,7 +6,7 @@ import batch.scheduler.service.CommandQueryProcessor
 import org.slf4j.LoggerFactory
 import java.lang.StringBuilder
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.Scanner
 import javax.inject.Singleton
 import java.util.regex.Pattern
 
@@ -113,12 +113,12 @@ class CLI(private val processor: CommandQueryProcessor) {
         }
 
         val name: String = input[0]
-        val latitude: Float = input[1].toFloat()
-        val longitude: Float = input[2].toFloat()
+        val latitude: Double = input[1].toDouble()
+        val longitude: Double = input[2].toDouble()
         val cap: Int = if (input.size > 3) input[3].toInt() else Integer.MAX_VALUE
 
-        return if (input.size > 3) CreateCity(name, latitude, longitude, cap)
-            else CreateCity(name, latitude, longitude)
+        return if (input.size > 3) CreateCity(name, Coordinate(latitude, longitude), cap)
+            else CreateCity(name, Coordinate(latitude, longitude))
     }
 
     private fun parseBatchCommand(input: List<String>): CreateBatch {
