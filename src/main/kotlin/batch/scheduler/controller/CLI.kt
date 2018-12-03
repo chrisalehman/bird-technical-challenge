@@ -18,7 +18,7 @@ class CLI(private val processor: CommandQueryProcessor) {
         private val LOG = LoggerFactory.getLogger(CLI::class.java)
     }
 
-    private enum class Tokens { CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
+    private enum class Tokens { HELP, QUIT, CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
     private var terminateProcess: Boolean = false
 
     fun start() {
@@ -39,7 +39,7 @@ class CLI(private val processor: CommandQueryProcessor) {
     // return words delimited by space, but preserving quotations around phrases
     private fun parseTokens(line: String): List<String> {
         val words: ArrayList<String> = ArrayList()
-        val m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line)
+        val m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line.trim())
         while (m.find()) {
             words.add(m.group(1).replace("\"", ""))
         }
@@ -49,7 +49,7 @@ class CLI(private val processor: CommandQueryProcessor) {
     private fun process(input: List<String>) {
 
         // minimum threshold of expected tokens
-        if (input.size < 2) {
+        if (input.isEmpty()) {
             print(getUsage())
             return
         }
@@ -58,7 +58,11 @@ class CLI(private val processor: CommandQueryProcessor) {
 
             // process input
             val command1 = input[0]
+
+            // next check for commands
             when (command1) {
+                Tokens.HELP.name -> print(getUsage())
+                Tokens.QUIT.name -> terminateProcess = true
                 Tokens.CITY.name -> processor.createCity(parseCityCommand(input.subList(1, input.size)))
                 Tokens.BATCH.name -> processor.createBatch(parseBatchCommand(input.subList(1, input.size)))
                 Tokens.SCHEDULE.name -> processor.scheduleDeployment(parseScheduleCommand(input.subList(1, input.size)))
@@ -165,10 +169,9 @@ class CLI(private val processor: CommandQueryProcessor) {
         val sb = StringBuilder()
                 .append("\nUsage: COMMAND [-hq] <arguments...>\n")
                 .append("CreateBatch scheduler CLI tool for managing Bird deployments.\n\n")
-                .append("Options:\n")
-                .append("  -h, --help           Show this help message.\n")
-                .append("  -q, --quit           Exit the command line.\n\n")
                 .append("Commands:\n")
+                .append("  HELP                                                     Show this help message.\n")
+                .append("  QUIT                                                     Terminate the command line.\n")
                 .append("  CITY \"<name>\" <latitude> <longitude> [<cap>]             Creates a city.\n")
                 .append("  BATCH <id> <size>                                        Creates a batch.\n")
                 .append("  SCHEDULE <batch-id> \"<city>\" <start-date> <end-date>     Deploys a batch to a city.\n")

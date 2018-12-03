@@ -33,14 +33,6 @@ import javax.inject.Singleton
         return id
     }
 
-    /**
-     *  // todo better explanation
-     *
-     *  Core logic:
-     *      a) Double-booking - Prevent a deployment if it overlaps any pre-existing deployment for the same batch ID.
-     *      b) Enforcing cityName cap - Prevent a deployment if the sum of batch size and overlapping intervals' batch sizes
-     *         are greater than the cityName's limit.
-     */
     fun scheduleDeployment(command: ScheduleDeployment): Long {
 
         val city: CityRecord = repo.getCity(command.city)
@@ -50,7 +42,13 @@ import javax.inject.Singleton
 
         // add interval constraints
         checker.addIntervalConstraints(
-                batch.batchNumber, batch.size, city.name, city.cap, command.startDate, command.endDate)
+                batch.batchNumber,
+                batch.size,
+                city.name,
+                city.location,
+                city.cap,
+                command.startDate,
+                command.endDate)
 
         // create the deployment
         val id = repo.createDeployment(command, city, batch)

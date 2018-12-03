@@ -43,7 +43,7 @@ class IntervalTest {
             println("Overlapping--")
             a.forEach { println("   $it") }
 
-            val b = tree.find(IdInterval(ID_A, LongInterval(1L, 5L, true, true)))
+            val b = tree.find(IdInterval(ID_A, LongInterval(1L, null, true, true)))
             println("Find exact--")
             b.forEach { println("   $it") }
 
