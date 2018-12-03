@@ -10,15 +10,6 @@ class LatencyCalculator {
     companion object {
         const val BATCH_TRAVEL_SPEED_KM_PER_HOUR: Double = 50.0
         const val DISTANCE_KM_PER_DEGREE: Double = 111.0
-
-        @JvmStatic
-        fun main(args: Array<String>) {
-            val from = Coordinate(0.00000, 0.00000)
-            val to = Coordinate(1.00000, 1.00000)
-            val millis: Long = LatencyCalculator().latencyInMillis(from, to)
-            val hours: Double = millis / 1000.0 / 60.0 / 60.0
-            println("Latency: millis=$millis, hours=$hours")
-        }
     }
 
     /**
