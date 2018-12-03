@@ -61,7 +61,7 @@ import java.util.SortedMap
                 .set(DEPLOYMENT.BATCH_ID, batch.id)
                 .set(DEPLOYMENT.CITY_ID, city.id)
                 .set(DEPLOYMENT.START_DATE, Timestamp.from(obj.startDate.toInstant()))    // H2 has an issue with DATE WITH TIME ZONE
-                .set(DEPLOYMENT.END_DATE, Timestamp.from(obj.endDate.toInstant()))        // so I'm unfortunately sacrificing accuracy
+                .set(DEPLOYMENT.END_DATE, Timestamp.from(obj.endDate.toInstant()))        // had to fall back on java.sql.Timestamp
                 .returning(DEPLOYMENT.ID)
                 .fetchOne()
                 .get(BATCH.ID)
