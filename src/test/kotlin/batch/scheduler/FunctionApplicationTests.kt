@@ -33,41 +33,41 @@ class FunctionApplicationTests: Spek({
             assertEquals("Cannot schedule deployment; city cap exceeded by 250 Birds for given period\n", client.apply("SCHEDULE 2 \"Austin\" 2018-08-31T00:44:40+00:00 2018-09-24T00:44:40+00:00"))
             assertEquals("OK", client.apply("SCHEDULE 3 \"Austin\" 2018-08-31T00:44:40+00:00 2018-09-24T00:44:40+00:00"))
             assertEquals("Austin\n" +
-                    "BATCH(1, 250) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
-                    "BATCH(3, 200) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
+                    "BATCH(1, 250) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
+                    "BATCH(3, 200) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
                     "Los Angeles\n",
                     client.apply("SHOW CITIES"))
             assertEquals("OK", client.apply("SCHEDULE 2 \"Austin\" 2018-09-25T00:00:00+00:00 2018-10-18T12:00:00+00:00"))
             assertEquals("Austin\n" +
-                    "BATCH(1, 250) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
-                    "BATCH(2, 500) -> 2018-09-24T17:00Z 2018-10-18T05:00Z\n" +
-                    "BATCH(3, 200) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
+                    "BATCH(1, 250) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
+                    "BATCH(2, 500) -> 2018-09-25T00:00Z 2018-10-18T12:00Z\n" +
+                    "BATCH(3, 200) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
                     "Los Angeles\n",
                     client.apply("SHOW CITIES"))
             assertEquals("OK", client.apply("CANCEL 3 \"Austin\" 2018-08-31T00:44:41+00:00"))
             assertEquals("BATCH 1\n" +
-                    "Austin 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
+                    "Austin 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
                     "BATCH 2\n" +
-                    "Austin 2018-09-24T17:00Z 2018-10-18T05:00Z\n" +
+                    "Austin 2018-09-25T00:00Z 2018-10-18T12:00Z\n" +
                     "BATCH 3\n",
                     client.apply("SHOW BATCHES"))
             assertEquals("Cannot schedule deployment; batch 2 has a conflict\n", client.apply("SCHEDULE 2 \"Los Angeles\" 2018-09-26T00:00:00+00:00 2018-09-30T12:00:00+00:00"))
             assertEquals("OK", client.apply("SCHEDULE 2 \"Los Angeles\" 2018-10-20T12:00:00+00:00 2018-12-17T12:00:00+00:00"))
             assertEquals("Austin\n" +
-                    "BATCH(1, 250) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
-                    "BATCH(2, 500) -> 2018-09-24T17:00Z 2018-10-18T05:00Z\n" +
+                    "BATCH(1, 250) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
+                    "BATCH(2, 500) -> 2018-09-25T00:00Z 2018-10-18T12:00Z\n" +
                     "Los Angeles\n" +
-                    "BATCH(2, 500) -> 2018-10-20T05:00Z 2018-12-17T04:00Z\n",
+                    "BATCH(2, 500) -> 2018-10-20T12:00Z 2018-12-17T12:00Z\n",
                     client.apply("SHOW CITIES"))
         }
 
         it ("runs the SHOW CITY and SHOW BATCH positive bonus commands") {
 
-            assertEquals("BATCH(1, 250) -> 2018-08-30T17:44:40Z 2018-09-23T17:44:40Z\n" +
-                    "BATCH(2, 500) -> 2018-09-24T17:00Z 2018-10-18T05:00Z\n", client.apply("SHOW CITY \"Austin\""))
+            assertEquals("BATCH(1, 250) -> 2018-08-31T00:44:40Z 2018-09-24T00:44:40Z\n" +
+                    "BATCH(2, 500) -> 2018-09-25T00:00Z 2018-10-18T12:00Z\n", client.apply("SHOW CITY \"Austin\""))
 
-            assertEquals("Austin 2018-09-24T17:00Z 2018-10-18T05:00Z\n" +
-                    "Los Angeles 2018-10-20T05:00Z 2018-12-17T04:00Z\n", client.apply("SHOW BATCH 2"))
+            assertEquals("Austin 2018-09-25T00:00Z 2018-10-18T12:00Z\n" +
+                    "Los Angeles 2018-10-20T12:00Z 2018-12-17T12:00Z\n", client.apply("SHOW BATCH 2"))
         }
 
         it("runs basic negative tests") {

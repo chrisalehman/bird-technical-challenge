@@ -7,13 +7,13 @@ cap int NOT NULL DEFAULT 2147483647
 );
 
 CREATE TABLE batch (
-  id BIGINT(20) NOT NULL auto_increment PRIMARY KEY,
+id BIGINT(20) NOT NULL auto_increment PRIMARY KEY,
 batch_number int NOT NULL,
 size int NOT NULL
 );
 
 CREATE TABLE deployment (
-  id BIGINT(20) NOT NULL auto_increment PRIMARY KEY,
+id BIGINT(20) NOT NULL auto_increment PRIMARY KEY,
 city_id BIGINT(20) NOT NULL,
 batch_id BIGINT(20) NOT NULL,
 start_date TIMESTAMP NOT NULL,

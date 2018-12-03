@@ -1,8 +1,8 @@
 package batch.scheduler.repository
 
 import batch.scheduler.domain.*
-import java.time.ZonedDateTime
-import java.util.*
+import java.time.OffsetDateTime
+import java.util.SortedMap
 
 
 interface Repository {
@@ -18,7 +18,7 @@ interface Repository {
 
     fun getCity(name: String): CityRecord?
     fun getBatch(batchNumber: Int): BatchRecord?
-    fun getDeployment(batchNumber: Int, cityName: String, date: ZonedDateTime): DeploymentRecord?
+    fun getDeployment(batchNumber: Int, cityName: String, date: OffsetDateTime): DeploymentRecord?
     fun getDeployments(city: String): List<DeploymentByCityResult>
     fun getDeployments(batchNumber: Int): List<DeploymentByBatchResult>
     fun getDeploymentsByCity(): SortedMap<String,List<DeploymentByCityResult>>

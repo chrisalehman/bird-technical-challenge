@@ -5,14 +5,17 @@ import batch.scheduler.domain.exceptions.*
 import batch.scheduler.service.CommandQueryProcessor
 import org.slf4j.LoggerFactory
 import java.lang.StringBuilder
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.Scanner
 import javax.inject.Singleton
 import java.util.regex.Pattern
 
 
-@Singleton
-class CLI(private val processor: CommandQueryProcessor) {
+/**
+ * Basic command line interpreter. Provides a while-loop mode for listening for stdin, and a request/reply mode
+ * that can be used for testing.
+ */
+@Singleton class CLI(private val processor: CommandQueryProcessor) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(CLI::class.java)
@@ -164,8 +167,8 @@ class CLI(private val processor: CommandQueryProcessor) {
 
         val batchId: Int = input[0].toInt()
         val city: String = input[1]
-        val startDate: ZonedDateTime = ZonedDateTime.parse(input[2])
-        val endDate: ZonedDateTime = ZonedDateTime.parse(input[3])
+        val startDate: OffsetDateTime = OffsetDateTime.parse(input[2])
+        val endDate: OffsetDateTime = OffsetDateTime.parse(input[3])
 
         return ScheduleDeployment(batchId, city, startDate, endDate)
     }
@@ -178,7 +181,7 @@ class CLI(private val processor: CommandQueryProcessor) {
 
         val batchId: Int = input[0].toInt()
         val city: String = input[1]
-        val date: ZonedDateTime = ZonedDateTime.parse(input[2])
+        val date: OffsetDateTime = OffsetDateTime.parse(input[2])
 
         return CancelDeployment(batchId, city, date)
     }

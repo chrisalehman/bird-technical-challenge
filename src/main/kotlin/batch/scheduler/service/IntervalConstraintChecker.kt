@@ -1,6 +1,9 @@
 package batch.scheduler.service
 
+import batch.scheduler.domain.Batch
+import batch.scheduler.domain.City
 import batch.scheduler.domain.Coordinate
+import batch.scheduler.domain.Deployment
 import batch.scheduler.domain.exceptions.BatchConstraintException
 import batch.scheduler.domain.exceptions.CityCapConstraintException
 import com.brein.time.timeintervals.collections.ListIntervalCollection
@@ -8,32 +11,15 @@ import com.brein.time.timeintervals.indexes.IntervalTree
 import com.brein.time.timeintervals.indexes.IntervalTreeBuilder
 import com.brein.time.timeintervals.intervals.IdInterval
 import com.brein.time.timeintervals.intervals.LongInterval
-import java.io.Serializable
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import javax.inject.Singleton
 
 
-@Singleton
-class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator) {
-
-    /**
-     * Batch data class associated with intervals.
-     */
-    data class Batch(val batchNumber: Int, val size: Int) : Comparable<Batch>, Serializable {
-
-        override fun hashCode(): Int {
-            return Integer.hashCode(batchNumber)
-        }
-
-        override fun equals(other: Any?): Boolean {
-            return if (other == null || other !is Batch) false
-                else batchNumber == other.batchNumber
-        }
-
-        override fun compareTo(other: Batch): Int {
-            return batchNumber - other.batchNumber
-        }
-    }
+/**
+ * Core class for handling interval overlapping logic. The key takeaway is that it utiilizes an interval tree data
+ * structure for achieving O(log(n)) traversals.
+ */
+@Singleton class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator) {
 
     /**
      * Associates data required for calculating overlaps for the same batch across cities, taking travel time into
@@ -53,35 +39,34 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
     private val cityCapIntervals: MutableMap<String, IntervalTree> = HashMap()
 
 
-    fun addIntervalConstraints(batchNumber: Int, batchSize: Int, city: String, cityLocation: Coordinate,
-                               cityCap: Int, start: ZonedDateTime, end: ZonedDateTime) {
+    fun addIntervalConstraints(d: Deployment) {
 
-        val batchInterval: IdInterval<Batch, Long> = createBatchInterval(batchNumber, batchSize, start, end)
+        val batchInterval: IdInterval<Batch, Long> = createBatchInterval(d.batch, d.start, d.end)
 
         // 1. process batch constraint, adding interval to associated interval tree if successful
 
-        if (!processBatchConstraint(city, cityLocation, batchInterval)) {
+        if (!processBatchConstraint(d.city, batchInterval)) {
             throw BatchConstraintException(
-                    "Cannot schedule deployment; batch $batchNumber has a conflict")
+                    "Cannot schedule deployment; batch ${d.batch.batchNumber} has a conflict")
         }
 
         // 2. process city cap constraint, adding interval to associated interval tree if successful
-        val excess: Int = processCityCapConstraint(city, cityCap, batchInterval)
+        val excess: Int = processCityCapConstraint(d.city, batchInterval)
         if (excess > 0) {
 
             // city cap rule violated, so we need to clean up - interval needs to be removed from batch constraint
             // interval tree
-            removeIntervalConstraints(batchNumber, city, start)
+            removeIntervalConstraints(d.batch.batchNumber, d.city.name, d.start)
 
             throw CityCapConstraintException(
                     "Cannot schedule deployment; city cap exceeded by $excess Birds for given period")
         }
     }
 
-    fun removeIntervalConstraints(batchNumber: Int, city: String, date: ZonedDateTime) {
+    fun removeIntervalConstraints(batchNumber: Int, city: String, date: OffsetDateTime) {
 
         // interval only has one date - works as long as it falls with range of intervals
-        val interval = createBatchInterval(batchNumber, 0, date, null)
+        val interval = createBatchInterval(Batch(batchNumber, 0), date, null)
 
         // 1. remove interval from batch conflict interval tree
 
@@ -124,11 +109,10 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
      *  3. If by the end no conflict is found, we're good! Add the interval to the interval tree of the same city.
      *
      * @param city
-     * @param cityLocation - The lat, long coordinate of interval's city
      * @param interval - The interval we're testing
      * @return - True if successful, false otherwise.
      */
-    private fun processBatchConstraint(city: String, cityLocation: Coordinate, interval: IdInterval<Batch,Long>): Boolean {
+    private fun processBatchConstraint(city: City, interval: IdInterval<Batch,Long>): Boolean {
 
         var secondaryMap: MutableMap<String,CityTuple>? = batchConflictIntervals[interval.id.batchNumber]
 
@@ -143,7 +127,7 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
         for ((kCity, vCityTuple) in secondaryMap) {
 
             // no distance calculation required for same city
-            if (kCity == city) {
+            if (kCity == city.name) {
 
                 // overlap detected for batch, so block scheduling deployment as it would constitute a double-booking of
                 // the batch for the given time period
@@ -156,7 +140,7 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
             else {
 
                 // calculate latency between cities
-                val latencyInMillis: Long = latencyCalculator.latencyInMillis(cityLocation, vCityTuple.location)
+                val latencyInMillis: Long = latencyCalculator.latencyInMillis(city.location, vCityTuple.location)
 
                 // create extended interval in both directions - we need to account for conflicts where the given
                 // city is the origin as well as the destination
@@ -175,7 +159,7 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
 
         // if we're here, it means there are no conflicts... proceed with adding
 
-        var cityTuple = secondaryMap[city]
+        var cityTuple = secondaryMap[city.name]
 
         // no city tuple exists, so create
         if (cityTuple == null) {
@@ -185,8 +169,8 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
             intervalTree.add(interval)
 
             // add city tuple to secondary map
-            cityTuple = CityTuple(city, cityLocation, intervalTree)
-            secondaryMap[city] = cityTuple
+            cityTuple = CityTuple(city.name, city.location, intervalTree)
+            secondaryMap[city.name] = cityTuple
         }
 
         // city tuple exists, add interval to existing interval tree
@@ -198,10 +182,9 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
     }
 
     /**
-     * Process city cap rule for the given deployment.
+     * Process city cap rule for the deployment.
      *
      * Algorithm:
-     *
      *  1. Look up interval tree based on the given deployment's city.
      *
      *  2. Search interval tree for overlaps with the given interval.
@@ -215,19 +198,18 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
      *     b) Otherwise, add the interval to the data structure and return zero.
      *
      * @param city
-     * @param cityCap
      * @param interval
      * @return The number of Birds that exceed the city cap, or zero if there is no violation.
      */
-    private fun processCityCapConstraint(city: String, cityCap: Int, interval: IdInterval<Batch,Long>): Int {
+    private fun processCityCapConstraint(city: City, interval: IdInterval<Batch,Long>): Int {
 
-        var intervalTree = cityCapIntervals[city]
+        var intervalTree = cityCapIntervals[city.name]
 
         // no tree exists for city, so create it
         if (intervalTree == null) {
             intervalTree = createIntervalTree()
             intervalTree.add(interval)
-            cityCapIntervals[city] = intervalTree
+            cityCapIntervals[city.name] = intervalTree
         }
 
         // interval tree exists for city
@@ -241,7 +223,7 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
                     .sumBy { it?.size ?: 0 }
 
             val total: Int = summedBatchSizes + interval.id.size
-            val excess: Int = total - cityCap
+            val excess: Int = total - city.cap
 
             // city cap violated, so block scheduling the deployment
             if (excess > 0) {
@@ -262,9 +244,9 @@ class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator
                 .build()
     }
 
-    private fun createBatchInterval(batchNumber: Int, batchSize: Int, start: ZonedDateTime, end: ZonedDateTime?): IdInterval<Batch,Long> {
+    private fun createBatchInterval(batch: Batch, start: OffsetDateTime, end: OffsetDateTime?): IdInterval<Batch,Long> {
         return IdInterval(
-                Batch(batchNumber, batchSize),
+                batch,
                 LongInterval(
                         start.toInstant().toEpochMilli(),
                         end?.toInstant()?.toEpochMilli(),true,true))

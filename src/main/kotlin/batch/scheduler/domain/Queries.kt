@@ -1,6 +1,6 @@
 package batch.scheduler.domain
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
 
 /**
@@ -31,8 +31,8 @@ data class BatchRecord(val id: Long, val batchNumber: Int, val size: Int)
  * @param startDate
  * @param endDate
  */
-data class DeploymentRecord(val id: Long, val cityId: Long, val batchId: Long, val startDate: ZonedDateTime,
-                            val endDate: ZonedDateTime)
+data class DeploymentRecord(val id: Long, val cityId: Long, val batchId: Long, val startDate: OffsetDateTime,
+                            val endDate: OffsetDateTime)
 
 /**
  * Represents a unit of the 'deployments grouped by city' query.
@@ -42,8 +42,8 @@ data class DeploymentRecord(val id: Long, val cityId: Long, val batchId: Long, v
  * @param startDate
  * @param endDate
  */
-data class DeploymentByCityResult(val batchNumber: Int, val batchSize: Int, val startDate: ZonedDateTime,
-                                  val endDate: ZonedDateTime) {
+data class DeploymentByCityResult(val batchNumber: Int, val batchSize: Int, val startDate: OffsetDateTime,
+                                  val endDate: OffsetDateTime) {
 
     override fun toString(): String {
         return "BATCH($batchNumber, $batchSize) -> $startDate $endDate"
@@ -57,7 +57,7 @@ data class DeploymentByCityResult(val batchNumber: Int, val batchSize: Int, val 
  * @param startDate
  * @param endDate
  */
-data class DeploymentByBatchResult(val cityName: String, val startDate: ZonedDateTime, val endDate: ZonedDateTime) {
+data class DeploymentByBatchResult(val cityName: String, val startDate: OffsetDateTime, val endDate: OffsetDateTime) {
 
     override fun toString(): String {
         return "$cityName $startDate $endDate"

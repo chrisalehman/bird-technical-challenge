@@ -1,6 +1,6 @@
 package batch.scheduler.domain
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
 
 /**
@@ -30,8 +30,8 @@ data class CreateBatch(val batchNumber: Int, val size: Int)
  * @param startDate - The date/time (with timezone) the batch is delivered and in effect.
  * @param endDate - The date/time (with timezone) the batch is decommissioned.
  */
-data class ScheduleDeployment(val batchNumber: Int, val city: String, val startDate: ZonedDateTime,
-                              val endDate: ZonedDateTime)
+data class ScheduleDeployment(val batchNumber: Int, val city: String, val startDate: OffsetDateTime,
+                              val endDate: OffsetDateTime)
 
 /**
  * Command object for canceling a scheduled deployment. Matching is based on given batch number, city name and date.
@@ -41,4 +41,4 @@ data class ScheduleDeployment(val batchNumber: Int, val city: String, val startD
  * @param cityName
  * @param date - Any date/time between a scheduled deployment's start and end dates.
  */
-data class CancelDeployment(val batchNumber: Int, val cityName: String, val date: ZonedDateTime)
+data class CancelDeployment(val batchNumber: Int, val cityName: String, val date: OffsetDateTime)

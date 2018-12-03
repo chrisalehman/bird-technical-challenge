@@ -10,7 +10,8 @@ import javax.inject.Singleton
 
 
 /**
- * Core logic layer. Utilizes the Command/Query pattern for the clean separation of concerns.
+ * Core logic layer. Utilizes the Command/Query pattern for the clean separation of concerns. Transactions are applied
+ * at the method level.
  **/
 @Singleton @Transactional class CommandQueryProcessor(private val repo: Repository,
                                                       private val checker: IntervalConstraintChecker) {
@@ -40,19 +41,17 @@ import javax.inject.Singleton
         val batch: BatchRecord = repo.getBatch(command.batchNumber)
                 ?: throw NonExistentEntityException("Cannot complete action for non-existent batch '${command.batchNumber}'")
 
-        // add interval constraints
+        // add interval constraints - this is where the main logic happens
         checker.addIntervalConstraints(
-                batch.batchNumber,
-                batch.size,
-                city.name,
-                city.location,
-                city.cap,
+            Deployment(
+                Batch(batch.batchNumber, batch.size),
+                City(city.name, city.location, city.cap),
                 command.startDate,
-                command.endDate)
+                command.endDate))
 
         // create the deployment
         val id = repo.createDeployment(command, city, batch)
-        LOG.info("Created deployment $id: $command")
+        LOG.info("Scheduled deployment $id: $command")
         return id
     }
 

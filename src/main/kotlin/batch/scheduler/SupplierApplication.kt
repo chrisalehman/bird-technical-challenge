@@ -6,8 +6,10 @@ import io.micronaut.runtime.Micronaut
 import java.util.function.Supplier
 
 
-@FunctionBean("batch-scheduler")
-class SupplierApplication(private val cli: CLI): Supplier<Unit> {
+/**
+ * Main standalone CLI application entry point.
+ */
+@FunctionBean("batch-scheduler") class SupplierApplication(private val cli: CLI): Supplier<Unit> {
 
     override fun get() {
         cli.start()

@@ -4,21 +4,19 @@ import batch.scheduler.domain.*
 import batch.scheduler.domain.exceptions.DuplicateEntityException
 import org.jooq.DSLContext
 import org.jooq.generated.tables.Batch.BATCH
-import javax.inject.Inject
 import javax.inject.Singleton
 import org.jooq.generated.tables.City.*
 import org.jooq.generated.tables.Deployment.DEPLOYMENT
-import java.time.ZonedDateTime
+import java.sql.Timestamp
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.SortedMap
 
 
 /**
  * Repository backed by H2 database. Current implementation is in-memory.
  */
-@Singleton class H2Repository : Repository {
-
-    @Inject
-    private lateinit var ctx: DSLContext
+@Singleton class H2Repository(private val ctx: DSLContext) : Repository {
 
     /* commands */
 
@@ -62,8 +60,8 @@ import java.util.SortedMap
         return ctx.insertInto(DEPLOYMENT)
                 .set(DEPLOYMENT.BATCH_ID, batch.id)
                 .set(DEPLOYMENT.CITY_ID, city.id)
-                .set(DEPLOYMENT.START_DATE, obj.startDate.toOffsetDateTime())
-                .set(DEPLOYMENT.END_DATE, obj.endDate.toOffsetDateTime())
+                .set(DEPLOYMENT.START_DATE, Timestamp.from(obj.startDate.toInstant()))    // H2 has an issue with DATE WITH TIME ZONE
+                .set(DEPLOYMENT.END_DATE, Timestamp.from(obj.endDate.toInstant()))        // so I'm unfortunately sacrificing accuracy
                 .returning(DEPLOYMENT.ID)
                 .fetchOne()
                 .get(BATCH.ID)
@@ -107,7 +105,7 @@ import java.util.SortedMap
         }
     }
 
-    override fun getDeployment(batchNumber: Int, cityName: String, date: ZonedDateTime): DeploymentRecord? {
+    override fun getDeployment(batchNumber: Int, cityName: String, date: OffsetDateTime): DeploymentRecord? {
 
         val record
                 = ctx.selectDistinct(DEPLOYMENT.ID, DEPLOYMENT.CITY_ID, DEPLOYMENT.BATCH_ID, DEPLOYMENT.START_DATE,
@@ -117,8 +115,8 @@ import java.util.SortedMap
             .join(CITY).on(CITY.ID.eq(DEPLOYMENT.CITY_ID))
             .where(BATCH.BATCH_NUMBER.eq(batchNumber))
             .and(CITY.NAME.eq(cityName))
-            .and(DEPLOYMENT.START_DATE.lessOrEqual(date.toOffsetDateTime()))
-            .and(DEPLOYMENT.END_DATE.greaterOrEqual(date.toOffsetDateTime()))
+            .and(DEPLOYMENT.START_DATE.lessOrEqual(Timestamp.from(date.toInstant())))
+            .and(DEPLOYMENT.END_DATE.greaterOrEqual(Timestamp.from(date.toInstant())))
             .fetchOptional()
 
         return if (!record.isPresent) null else {
@@ -127,8 +125,8 @@ import java.util.SortedMap
                     it.get(DEPLOYMENT.ID),
                     it.get(DEPLOYMENT.CITY_ID),
                     it.get(DEPLOYMENT.BATCH_ID),
-                    it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
-                    it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                    it.get(DEPLOYMENT.START_DATE).toInstant().atOffset(ZoneOffset.UTC),
+                    it.get(DEPLOYMENT.END_DATE).toInstant().atOffset(ZoneOffset.UTC)) }
         }
     }
 
@@ -144,8 +142,8 @@ import java.util.SortedMap
             .map { DeploymentByCityResult(
                     it.get(BATCH.BATCH_NUMBER),
                     it.get(BATCH.SIZE),
-                    it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
-                    it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                    it.get(DEPLOYMENT.START_DATE).toInstant().atOffset(ZoneOffset.UTC),
+                    it.get(DEPLOYMENT.END_DATE).toInstant().atOffset(ZoneOffset.UTC)) }
             .toList()
     }
 
@@ -160,8 +158,8 @@ import java.util.SortedMap
             .asSequence()
             .map { DeploymentByBatchResult(
                     it.get(CITY.NAME),
-                    it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
-                    it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                    it.get(DEPLOYMENT.START_DATE).toInstant().atOffset(ZoneOffset.UTC),
+                    it.get(DEPLOYMENT.END_DATE).toInstant().atOffset(ZoneOffset.UTC)) }
             .toList()
     }
 
@@ -180,8 +178,8 @@ import java.util.SortedMap
                     DeploymentByCityResult(
                             it.get(BATCH.BATCH_NUMBER),
                             it.get(BATCH.SIZE),
-                            it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
-                            it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                            it.get(DEPLOYMENT.START_DATE).toInstant().atOffset(ZoneOffset.UTC),
+                            it.get(DEPLOYMENT.END_DATE).toInstant().atOffset(ZoneOffset.UTC)) }
             }
             .toSortedMap()
     }
@@ -200,8 +198,8 @@ import java.util.SortedMap
                 else v.map {
                     DeploymentByBatchResult(
                         it.get(CITY.NAME),
-                        it.get(DEPLOYMENT.START_DATE).toZonedDateTime(),
-                        it.get(DEPLOYMENT.END_DATE).toZonedDateTime()) }
+                        it.get(DEPLOYMENT.START_DATE).toInstant().atOffset(ZoneOffset.UTC),
+                        it.get(DEPLOYMENT.END_DATE).toInstant().atOffset(ZoneOffset.UTC)) }
                 }
             .toSortedMap()
     }
