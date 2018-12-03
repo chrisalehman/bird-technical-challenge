@@ -190,7 +190,7 @@ import java.util.regex.Pattern
 
         val sb = StringBuilder()
                 .append("\nUsage: COMMAND [<arguments...>\n")
-                .append("CreateBatch scheduler CLI tool for managing Bird deployments.\n\n")
+                .append("Batch scheduler CLI tool for managing Bird deployments.\n\n")
                 .append("Commands:\n")
                 .append("  HELP                                                     Show this help message.\n")
                 .append("  QUIT                                                     Terminate the command line.\n")
