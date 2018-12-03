@@ -92,7 +92,9 @@ import javax.inject.Singleton
     }
 
     fun getDeploymentsByCity(): SortedMap<String, List<DeploymentByCityResult>> {
-        return repo.getDeploymentsByCity()
+        val result = repo.getDeploymentsByCity()
+        LOG.warn("RESULT: $result")
+        return result
     }
 
     fun getDeploymentsByBatch(): SortedMap<Int,List<DeploymentByBatchResult>> {

@@ -1,0 +1,10 @@
+micronaut:
+    function:
+        name: batch-scheduler-test
+        version: 0.1
+datasources:
+    default:
+        url: jdbc:h2:mem:default;DB_CLOSE_DELAY=-1
+        username: sa
+        password: ""
+        driverClassName: org.h2.Driver

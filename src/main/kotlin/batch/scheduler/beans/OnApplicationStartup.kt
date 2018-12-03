@@ -1,5 +1,7 @@
 package batch.scheduler.beans
 
+import io.micronaut.context.annotation.Requires
+import io.micronaut.context.env.Environment
 import io.micronaut.context.event.ApplicationEventListener
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.runtime.event.annotation.EventListener
@@ -10,6 +12,7 @@ import javax.inject.Singleton
 
 
 @Singleton
+@Requires(notEnv = [Environment.TEST])
 class OnApplicationStartup: ApplicationEventListener<StartupEvent> {
 
     companion object {
@@ -34,7 +37,6 @@ class OnApplicationStartup: ApplicationEventListener<StartupEvent> {
             LOG.warn("Loading schema at startup...")
             val sql: String = this::class.java.getResource("/ddl.sql").readText()
             ctx.execute(sql)
-            LOG.info(sql)
         }
     }
 }

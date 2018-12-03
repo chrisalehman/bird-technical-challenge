@@ -1,7 +1,3 @@
---TRUNCATE TABLE cityName;
---TRUNCATE TABLE batch;
---TRUNCATE TABLE deployment;
-
 -- create cityName
 INSERT INTO city (name, latitude, longitude, cap)
 VALUES ('Los Angeles', 34.048925, -118.428663, 2147483647),

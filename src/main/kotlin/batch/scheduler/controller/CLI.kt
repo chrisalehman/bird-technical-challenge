@@ -21,6 +21,10 @@ class CLI(private val processor: CommandQueryProcessor) {
     private enum class Tokens { HELP, QUIT, CITY, CITIES, BATCH, BATCHES, SCHEDULE, CANCEL, SHOW }
     private var terminateProcess: Boolean = false
 
+    /**
+     * Normal entry point for CLI application. Executes in a while loop, blocking on stdin for commands from the
+     * user.
+     */
     fun start() {
 
         print(getUsage())
@@ -30,10 +34,20 @@ class CLI(private val processor: CommandQueryProcessor) {
         val scanner = Scanner(System.`in`)
         scanner.use {
             while (!terminateProcess) {
-                process(parseTokens(scanner.nextLine()))
+                print(process(parseTokens(scanner.nextLine())))
                 print("> ")
             }
         }
+    }
+
+    /**
+     * Used for executing request/response communication with service. Facilitates testing. Departing from the above
+     * style, return 'OK' when the command has completed to guarantee there is always a response to interpret from
+     * the test.
+     */
+    fun execute(input: String): String {
+        val result: String = process(parseTokens(input))
+        return if (result.isEmpty() || result.isBlank()) "OK" else result
     }
 
     // return words delimited by space, but preserving quotations around phrases
@@ -46,14 +60,14 @@ class CLI(private val processor: CommandQueryProcessor) {
         return words
     }
 
-    private fun process(input: List<String>) {
+    private fun process(input: List<String>): String {
 
         // minimum threshold of expected tokens
         if (input.isEmpty()) {
-            print(getUsage())
-            return
+            return getUsage()
         }
 
+        val out: StringBuilder = StringBuilder()
         try {
 
             // process input
@@ -73,41 +87,46 @@ class CLI(private val processor: CommandQueryProcessor) {
                         Tokens.CITIES.name -> {
                             val map = processor.getDeploymentsByCity()
                             map.keys.forEach {
-                                println(it)
-                                map[it]?.forEach { e -> println(e) }
+                                out.append(it).append("\n")
+                                map[it]?.forEach { e -> out.append(e).append("\n") }
                             }
+                            return out.toString()
                         }
                         Tokens.BATCHES.name -> {
                             val map = processor.getDeploymentsByBatch()
                             map.keys.forEach {
-                                println("BATCH $it")
-                                map[it]?.forEach { e -> println(e) }
+                                out.append("BATCH $it\n")
+                                map[it]?.forEach { e -> out.append(e).append("\n") }
                             }
+                            return out.toString()
                         }
                         Tokens.CITY.name -> if (input.size <= 2) println("Invalid arguments") else {
                             processor.getDeployments(input[2])
-                                    .forEach { e -> println(e) }
+                                .forEach { e -> out.append(e).append("\n") }
+                            return out.toString()
                         }
                         Tokens.BATCH.name -> if (input.size <= 2) println("Invalid arguments") else {
                             processor.getDeployments(input[2].toInt())
-                                    .forEach { e -> println(e) }
+                                    .forEach { e -> out.append(e).append("\n") }
                         }
-                        else -> println("Invalid command: $command1 $command2")
+                        else -> return out.append("Invalid command: $command1 $command2\n").toString()
                     }
                 }
-                else -> println("Invalid command: $command1")
+                else -> return out.append("Invalid command: $command1\n").toString()
             }
 
         } catch (e: ArgumentListException) {
-            println("Missing arguments")
+            return out.append("Missing arguments\n").toString()
         } catch (e: NumberFormatException) {
-            println("Invalid arguments")
+            return out.append("Invalid arguments\n").toString()
         } catch (e: BusinessException) {
-            println(e.message)
+            return out.append(e.message).append("\n").toString()
         } catch (e: RuntimeException) {
-            println("Unexpected error; see application log for details")
             LOG.error(e.message, e)
+            return out.append("Unexpected error; see application log for details\n").toString()
         }
+
+        return out.toString()
     }
 
     private fun parseCityCommand(input: List<String>): CreateCity {
@@ -167,7 +186,7 @@ class CLI(private val processor: CommandQueryProcessor) {
     private fun getUsage(): String {
 
         val sb = StringBuilder()
-                .append("\nUsage: COMMAND [-hq] <arguments...>\n")
+                .append("\nUsage: COMMAND [<arguments...>\n")
                 .append("CreateBatch scheduler CLI tool for managing Bird deployments.\n\n")
                 .append("Commands:\n")
                 .append("  HELP                                                     Show this help message.\n")
