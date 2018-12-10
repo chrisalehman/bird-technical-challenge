@@ -23,7 +23,7 @@
     <!-- Turn on debug logging for Brein interval tree library -->
     <logger name="com.brein.time" level="DEBUG" />
 
-    <root level="WARN">
+    <root level="DEBUG">
         <appender-ref ref="FILE" />
     </root>
 </configuration>

@@ -50,7 +50,7 @@ import java.util.regex.Pattern
      */
     fun execute(input: String): String {
         val result: String = process(parseTokens(input))
-        return if (result.isEmpty() || result.isBlank()) "OK" else result
+        return if (result.isEmpty()) "OK" else result
     }
 
     // return words delimited by space, but preserving quotations around phrases

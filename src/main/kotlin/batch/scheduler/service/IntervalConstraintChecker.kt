@@ -11,15 +11,24 @@ import com.brein.time.timeintervals.indexes.IntervalTree
 import com.brein.time.timeintervals.indexes.IntervalTreeBuilder
 import com.brein.time.timeintervals.intervals.IdInterval
 import com.brein.time.timeintervals.intervals.LongInterval
+import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 import javax.inject.Singleton
 
 
 /**
- * Core class for handling interval overlapping logic. The key takeaway is that it utiilizes an interval tree data
- * structure for achieving O(log(n)) traversals.
+ * Core class for handling interval overlapping logic. It utilizes an interval tree data structure for achieving
+ * O(log(n)) time complexity for inserts, removals, and finding incidence of overlap. O(log(n)+k) is required to
+ * find a specific interval among an overlap set.
+ *
+ *  1. Batch conflict map:  batchId -> (city name -> city tuple (contains interval tree))
+ *  2. City name -> batch interval tree
  */
 @Singleton class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator) {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(IntervalConstraintChecker::class.java)
+    }
 
     /**
      * Associates data required for calculating overlaps for the same batch across cities, taking travel time into
@@ -27,15 +36,7 @@ import javax.inject.Singleton
      */
     class CityTuple(val city: String, val location: Coordinate, val intervalTree: IntervalTree)
 
-    /**
-     * Map of batchId -> (map of city name -> "city tuple"). City tuples contain city information and their associated
-     * batch interval trees. Used for calculating conflicts for the same batch.
-     */
     private val batchConflictIntervals: MutableMap<Int, MutableMap<String, CityTuple>> = HashMap()
-
-    /**
-     * Map of city name -> batch interval tree. Used for calculating whether a city's cap has been exceeded.
-     */
     private val cityCapIntervals: MutableMap<String, IntervalTree> = HashMap()
 
 
@@ -44,22 +45,21 @@ import javax.inject.Singleton
         val batchInterval: IdInterval<Batch, Long> = createBatchInterval(d.batch, d.start, d.end)
 
         // 1. process batch constraint, adding interval to associated interval tree if successful
-
         if (!processBatchConstraint(d.city, batchInterval)) {
             throw BatchConstraintException(
                     "Cannot schedule deployment; batch ${d.batch.batchNumber} has a conflict")
         }
 
         // 2. process city cap constraint, adding interval to associated interval tree if successful
-        val excess: Int = processCityCapConstraint(d.city, batchInterval)
-        if (excess > 0) {
+        val diff: Int = processCityCapConstraint(d.city, batchInterval)
+        if (diff > 0) {
 
             // city cap rule violated, so we need to clean up - interval needs to be removed from batch constraint
             // interval tree
             removeIntervalConstraints(d.batch.batchNumber, d.city.name, d.start)
 
             throw CityCapConstraintException(
-                    "Cannot schedule deployment; city cap exceeded by $excess Birds for given period")
+                    "Cannot schedule deployment; city cap exceeded by $diff Birds for given period")
         }
     }
 
@@ -69,24 +69,28 @@ import javax.inject.Singleton
         val interval = createBatchInterval(Batch(batchNumber, 0), date, null)
 
         // 1. remove interval from batch conflict interval tree
-
         val bcTree = batchConflictIntervals[batchNumber]?.get(city)?.intervalTree
-        (bcTree?.overlap(interval) ?: listOf())
+        val bcMatch: IdInterval<*,*>? = (bcTree?.overlap(interval) ?: listOf())
             .asSequence()
             .map { if (it is IdInterval<*,*>) it else null }
-            .filter { it != null }
-            .filter { (it?.getId() as Batch).batchNumber == batchNumber }
-            .forEach { bcTree?.remove(it) }
+            .firstOrNull { it != null && (it.getId() as Batch).batchNumber == batchNumber }
+        if (bcMatch != null) {
+            if (bcTree?.remove(bcMatch) == false) {
+                LOG.warn("Failed to remove interval $bcMatch from batch conflict interval tree")
+            }
+        }
 
         // 2. remove interval from city cap interval tree
-
         val cpiTree = cityCapIntervals[city]
-        (cpiTree?.overlap(interval) ?: listOf())
+        val cpiMatch: IdInterval<*,*>? = (cpiTree?.overlap(interval) ?: listOf())
             .asSequence()
             .map { if (it is IdInterval<*,*>) it else null }
-            .filter { it != null }
-            .filter { (it?.getId() as Batch).batchNumber == batchNumber }
-            .forEach { cpiTree?.remove(it) }
+            .firstOrNull { it != null && (it.getId() as Batch).batchNumber == batchNumber }
+        if (cpiMatch != null) {
+            if (cpiTree?.remove(cpiMatch) == false) {
+                LOG.warn("Failed to remove interval $cpiMatch from city cap interval tree")
+            }
+        }
     }
 
     /**
@@ -205,6 +209,12 @@ import javax.inject.Singleton
 
         var intervalTree = cityCapIntervals[city.name]
 
+        // first check if the city's cap is violated by the deployment itself
+        var diff: Int = interval.id.size - city.cap
+        if (diff > 0) {
+            return diff
+        }
+
         // no tree exists for city, so create it
         if (intervalTree == null) {
             intervalTree = createIntervalTree()
@@ -219,15 +229,15 @@ import javax.inject.Singleton
             val summedBatchSizes: Int = intervalTree.overlap(interval)
                     .asSequence()
                     .map { if (it is IdInterval<*,*>) it.getId() as Batch else null }
-                    .filter { it != null }
-                    .sumBy { it?.size ?: 0 }
+                    .filterNotNull()
+                    .sumBy { it.size }
 
             val total: Int = summedBatchSizes + interval.id.size
-            val excess: Int = total - city.cap
+            diff = total - city.cap
 
             // city cap violated, so block scheduling the deployment
-            if (excess > 0) {
-                return excess
+            if (diff > 0) {
+                return diff
             }
 
             // add city batch interval

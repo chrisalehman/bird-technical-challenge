@@ -25,7 +25,7 @@ class LatencyCalculator {
     }
 
     /**
-     * Calculates the distance between (x1,x2) to (y1,y2).
+     * Calculates the distance between (x1,y1) and (x2,y2).
      * <p>
      * @see: https://www.baeldung.com/java-distance-between-two-points
      */
