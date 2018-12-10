@@ -16,18 +16,24 @@ I opted to solve these business rules with an open source Interval Tree implemen
 
 ## How to build
 
-I provided an env-setup.sh script in $PROJECT_HOME/bin. Assuming a Unix or Mac OS, this will install all required system packages. 
+I provided an env-setup.sh script in $PROJECT_HOME/bin. Assuming a Unix or Mac OS, this will install all required system packages. I also created a Makefile to simplify the gradle commands.
 
-To build and execute tests, run the following command: 
-
-```
-./gradlew clean generateBatchschedulerJooqSchemaSource build
-```
-
-To skip tests, include ```-x test``` at the end. You can run the self-executing JAR file as follows:
+To build: 
 
 ```
-java -jar build/libs/bird-assignment-tmp-0.1-all.jar
+make build-all
+```
+
+To run tests:
+
+```
+make test
+```
+
+To run the application:
+
+```
+make run
 ```
 
 Best regards, Chris
