@@ -22,7 +22,7 @@ import javax.inject.Singleton
  * find a specific interval among an overlap set.
  *
  *  1. Batch conflict map:  batchId -> (city name -> city tuple (contains interval tree))
- *  2. City name -> batch interval tree
+ *  2. City cap map: City name -> batch interval tree
  */
 @Singleton class IntervalConstraintChecker(private val latencyCalculator: LatencyCalculator) {
 
@@ -34,7 +34,7 @@ import javax.inject.Singleton
      * Associates data required for calculating overlaps for the same batch across cities, taking travel time into
      * account.
      */
-    class CityTuple(val city: String, val location: Coordinate, val intervalTree: IntervalTree)
+    data class CityTuple(val city: String, val location: Coordinate, val intervalTree: IntervalTree)
 
     private val batchConflictIntervals: MutableMap<Int, MutableMap<String, CityTuple>> = HashMap()
     private val cityCapIntervals: MutableMap<String, IntervalTree> = HashMap()
