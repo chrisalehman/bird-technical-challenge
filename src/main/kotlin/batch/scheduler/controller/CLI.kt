@@ -189,7 +189,7 @@ import java.util.regex.Pattern
     private fun getUsage(): String {
 
         val sb = StringBuilder()
-                .append("\nUsage: COMMAND [<arguments...>\n")
+                .append("\nUsage: COMMAND [<arguments...>]\n")
                 .append("Batch scheduler CLI tool for managing Bird deployments.\n\n")
                 .append("Commands:\n")
                 .append("  HELP                                                     Show this help message.\n")
