@@ -1,5 +1,5 @@
 run:
-	java -jar build/libs/bird-assignment-tmp-0.1-all.jar
+	java -jar build/libs/bird-technical-challenge-0.1-all.jar
 
 clean:
 	./gradlew clean

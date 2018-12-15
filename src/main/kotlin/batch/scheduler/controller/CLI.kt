@@ -189,7 +189,7 @@ import java.util.regex.Pattern
     private fun getUsage(): String {
 
         val sb = StringBuilder()
-                .append("\nUsage: COMMAND [<arguments...>\n")
+                .append("\nUsage: COMMAND [<arguments...>]\n")
                 .append("Batch scheduler CLI tool for managing Bird deployments.\n\n")
                 .append("Commands:\n")
                 .append("  HELP                                                     Show this help message.\n")
@@ -199,7 +199,9 @@ import java.util.regex.Pattern
                 .append("  SCHEDULE <batch-id> \"<city>\" <start-date> <end-date>     Deploys a batch to a city.\n")
                 .append("  CANCEL <batch-id> \"<city>\" <date>                        Cancels a batch deployment based on the batch-id, city and date.\n")
                 .append("  SHOW CITIES                                              Prints scheduled deployments by city.\n")
+                .append("  SHOW CITY \"<city>\"                                       Prints scheduled deployments for a city.\n")
                 .append("  SHOW BATCHES                                             Prints scheduled deployments by batch.\n")
+                .append("  SHOW BATCH <batch-id>                                    Prints scheduled deployment.\n")
                 .append("\n")
 
         return sb.toString()
