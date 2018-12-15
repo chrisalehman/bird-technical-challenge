@@ -4,7 +4,7 @@ This document presents a complete implementation of the Bird coding challenge. T
 
 ## Design
 
-The application is written in Kotlin, leverages the Micronaut framework, and uses Gradle for the build system. It is completely self-contained. It runs in two of two modes: as a regular CLI that listens on stdin for input from the terminal, or as a client/server app for automated testing. Note that this it is based on a Function Micronaut profile and so with some additional changes could be deployed as a FaaS.
+The application is written in Kotlin, leverages the Micronaut framework, and uses Gradle for the build system. It is completely self-contained. It runs in one of two modes: as a regular CLI that listens on stdin for input from the terminal, or as a client/server app for automated testing. Note that this it is based on a Function Micronaut profile and so with some additional changes could be deployed as a FaaS.
 
 The backend relies on an in-memory H2 relational database for storing the City, Batch and Deployment data. This could be swapped out with a enterprise-grade datastore were we to need to scale it. 
 
